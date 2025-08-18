@@ -139,7 +139,7 @@ reviews:
         **General PostgreSQL / CloudSQL Best Practices (Applicable across languages):** 🐘
         This code appears to interact with a PostgreSQL or CloudSQL database. Please ensure the following:
         
-        1.  **Security:** Check if all queries use parameterized statements to prevent SQL injection. Ensure the code uses a least-privilege approach for database users/roles.
+        1.  **Security:** Check if all queries use parameterized statements to prevent SQL injection.
         2.  **Performance:** Look for N+1 query patterns and suggest batching or JOINs. Check for opportunities for new or improved indexes on `WHERE`, `JOIN`, and `ORDER BY` clauses. Avoid expensive operations like `FULL SCAN` and `CARTESIAN JOIN`.
         3.  **Clarity:** Use aliases and ensure SQL queries are easy to read and understand.
         4.  **Error Handling:** Handle database connection and query execution errors gracefully.
@@ -165,6 +165,7 @@ reviews:
         6.  **Graceful Connection Closing:** Ensure the Spanner client is closed gracefully at the end of its lifecycle to prevent resource leaks.
         7.  **Query Priority:** Set `HIGH`, `MEDIUM`, or `LOW` priority for queries to manage resource contention effectively
         10. **`FORCE_INDEX`:** Use `FORCE_INDEX` when you wish prompt Spanner to use a specific index
+        11.  **Security:** Check if all queries use parameterized statements to prevent SQL injection.
 
     # --- ScyllaDB Best Practices (Directory Keywords) ---
     - path: "**/{scylladb,scylla,ScyllaDB,Scylla}/**/*.{go,js,ts,py,java}"
