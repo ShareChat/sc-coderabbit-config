@@ -42,7 +42,24 @@ reviews:
   # Path-specific review instructions
   path_instructions:
     # --- Temporal Best Practices ---
-    - path: "**/{temporal,worker,workflow,workflows,tasks,activities,Temporal,Worker,Workflow,Workflows,Tasks,Activities}/**/*.{go,js,ts,py,java}"
+    - path: "**/*{temporal*,worker*,workflow*,task*,activit*}*"
+      instructions: |
+        **General Temporal Best Practices (Applicable across languages):**
+        This code appears to be related to Temporal Workflows or Activities. Please ensure the following:
+        
+        1.  **Determinism is Crucial for Workflows:**
+            * Avoid non-deterministic operations (e.g., direct access to system time/random numbers). Use Temporal's built-in deterministic functions for these.
+            * No direct I/O (database calls, network requests, file system access) within Workflow code. All side-effects must be delegated to Activities.
+            * Avoid global mutable state or concurrent access that isn't managed deterministically by the Temporal SDK.
+        2.  **Activity Idempotency:** Activities should be designed to be idempotent whenever possible, as they can be retried multiple times. Consider using idempotency keys for operations with side effects.
+        3.  **Timeouts and Heartbeating:** Properly configure timeouts for Activities (e.g., `StartToCloseTimeout`). For long-running Activities, implement heartbeating to signal progress and prevent unnecessary timeouts.
+        4.  **Single Responsibility:** Design Workflows for orchestration and Activities for specific side-effecting tasks. Keep them focused and granular.
+        5.  **Robust Error Handling:** Implement comprehensive error handling, including retries, compensation logic, and proper propagation of errors from Activities to Workflows.
+        6.  **Worker Configuration:** Ensure that the Worker options are appropriately tuned for your workload. Consider configuring the following:
+            * **Concurrency:** `MaxConcurrentActivityExecutionSize` and `MaxConcurrentWorkflowTaskExecutionSize` to control the number of parallel executions.
+            * **Polling:** `MaxConcurrentActivityTaskPollers` and `MaxConcurrentWorkflowTaskPollers` to manage the number of open connections for fetching tasks.
+
+    - path: "**/{temporal,worker,workflow,task,activit}*/**"
       instructions: |
         **General Temporal Best Practices (Applicable across languages):**
         This code appears to be related to Temporal Workflows or Activities. Please ensure the following:
@@ -61,7 +78,27 @@ reviews:
 
 
     # --- Redis Best Practices ---
-    - path: "**/{redis,df,dragonfly,cache,queue,Redis,Cache,Queue}/**/*.{go,js,ts,py,java}"
+    - path: "**/*{redis*,df*,dragonfly*,cache*,queue*}*"
+      instructions: |
+        **General Redis Interaction Best Practices (Applicable across languages):**
+        This code appears to interact with Redis. Please ensure the following:
+        
+        1.  **Key Naming Conventions:** Use clear, hierarchical, and concise key names to save space. Avoid excessively long key names.
+        2.  **Unbounded Returns:** Be cautious with commands like `HGETALL`, `LRANGE`, `SMEMBERS`, and `ZRANGE` without limits. They can return a massive number of items, blocking Redis. Best practices:
+            * Sanity check the size first using commands like `HLEN`, `LLEN`, `SCARD`, or `ZCARD`.
+            * Use range limits or iterative commands like `HSCAN`, `SSCAN`, and `ZSCAN` instead.
+        3.  **Appropriate Data Structures:** Choose the most efficient Redis data type (Strings, Hashes, Lists, Sets, Sorted Sets) for your use case.
+        4.  **Expiration (TTL):** Always set an appropriate Time-To-Live (TTL) for transient or cache data to prevent memory bloat.
+        5.  **Avoid Blocking Commands:** Do not use `KEYS` in production. Prefer `SCAN` for iterative key discovery. Avoid `FLUSHALL`/`FLUSHDB` without extreme caution.
+        6.  **Pipelining for Performance:** Batch multiple Redis commands using pipelining to reduce network round-trip time.
+        7.  **Connection Management:** Utilize connection pooling for efficient resource usage. Ensure the Redis client is configured with appropriate settings:
+            * `ReadTimeout`, `WriteTimeout` for network operations.
+            * `PoolSize`, `PoolTimeout`, `MinIdleConns`, `MaxIdleConn` for connection pool tuning.
+        8.  **Error Handling & Fallbacks:** Implement robust error handling and define fallback strategies if Redis is unavailable.
+        9.  **Security:** Never expose Redis directly to the public internet. Ensure authentication is configured.
+        10. **Compress:** Compress data using various algorithms(gzip, zstd)
+
+    - path: "**/{redis,df,dragonfly,cache,queue}*/**"
       instructions: |
         **General Redis Interaction Best Practices (Applicable across languages):**
         This code appears to interact with Redis. Please ensure the following:
@@ -82,7 +119,21 @@ reviews:
         10. **Compress:** Compress data using various algorithms(gzip, zstd)
 
     # --- HTTP Client Best Practices ---
-    - path: "**/{http,client,clients,api,network,Http,Client,Clients,Api,Network}/**/*.{go,js,ts,py,java,cs,rb}"
+    - path: "**/*{http*,client*,api*,network*}*"
+      instructions: |
+        **General HTTP Client Best Practices (Applicable across languages):**
+        This code appears to make HTTP requests. Please ensure the following:
+        
+        1.  **Client Reuse & Connection Pooling:** Reuse HTTP client instances to leverage connection pooling and avoid socket exhaustion. Properly configure connection pool settings, such as `MaxIdleConns`, `MaxConnsPerHost`, and `MaxIdleConnsPerHost`.
+        2.  **Timeouts:** Always configure explicit connection and request timeouts to prevent indefinite hangs. Look for settings like `ConnectTimeout` (for establishing the TCP connection) and `CallTimeout` (for the total request duration).
+        3.  **Status Code Handling:** Properly handle all HTTP status codes (2xx, 4xx, 5xx) to manage success, client errors, and server errors gracefully.
+        4.  **Retry Logic:** Implement intelligent retry mechanisms (e.g., exponential backoff with jitter) for transient errors, but only for idempotent requests.
+        5.  **Secure Communication (HTTPS):** Always use HTTPS. Do not disable SSL/TLS certificate validation in production.
+        6.  **Observability:** Implement robust logging for requests/responses (especially errors) and tracing to monitor HTTP interactions.
+        7.  **Error Handling:** Use language-appropriate error handling (e.g., `try-catch`, `if err != nil`) for network and HTTP-specific errors.
+        8.  **Close the response after reading the body**
+
+    - path: "**/{http,client,api,network}*/**"
       instructions: |
         **General HTTP Client Best Practices (Applicable across languages):**
         This code appears to make HTTP requests. Please ensure the following:
@@ -97,7 +148,43 @@ reviews:
         8.  **Close the response after reading the body**
 
     # --- Kafka Best Practices (Directory Keywords) ---
-    - path: "**/{kafka,producer,consumer,broker,topic,stream,Kafka,Producer,Consumer,Broker,Topic,Stream}/**/*.{go,js,ts,py,java}"
+    - path: "**/*{kafka*,producer*,consumer*,broker*,topic*,stream*}*"
+      instructions: |
+        **General Kafka Best Practices (Applicable across languages):** 📧
+        This code appears to interact with Apache Kafka. Please ensure the following:
+
+        1.  **Singleton Client:** Reuse Kafka client instances (Producer, Consumer) throughout the application's lifecycle to avoid connection overhead.
+        2.  **Producer Configuration:** Configure producers for optimal throughput and reliability. Look for:
+            * `MaxBatchBytes` (e.g., `kgo.ProducerBatchMaxBytes`): Maximum size of a batch in bytes.
+            * `MaxBufferedRecords` (e.g., `kgo.MaxBufferedRecords`): Max messages to buffer before sending.
+            * `ProducerLinger` (e.g., `kgo.ProducerLinger`): Time to wait before sending a batch.
+            * `ProducerBatchCompression` (e.g., `kgo.GzipCompression`): Compression type (Gzip, Snappy, LZ4, Zstd, None).
+            * `RecordRetries` (e.g., `kgo.RecordRetries`): Number of retries for failed messages.
+            * `ProduceRequestTimeout` (e.g., `kgo.ProduceRequestTimeout`): Timeout for produce requests.
+            * `RequiredAcks` (e.g., `kgo.LeaderAck`, `kgo.AllISRAcks`): Acknowledgment level from brokers.
+            * **Idempotence:** Ensure idempotent producers are enabled (`enable.idempotence=true` or equivalent) to prevent message duplication on the broker. Avoid explicitly disabling it (`kgo.DisableIdempotentWrite()`) unless absolutely necessary and understood.
+        3.  **Consumer Configuration:** Configure consumers for efficient and reliable consumption. Look for:
+            * `FetchMinBytes` (e.g., `kgo.FetchMinBytes`): Minimum bytes to read before returning messages.
+            * `FetchMaxBytes` (e.g., `kgo.FetchMaxBytes`): Maximum bytes to read before returning messages.
+            * `MaxConcurrentFetches` (e.g., `kgo.MaxConcurrentFetches`): Max concurrent fetches allowed.
+            * `SessionTimeout` (e.g., `kgo.SessionTimeout`): Timeout for consumer session.
+            * `RebalanceTimeout` (e.g., `kgo.RebalanceTimeout`): Timeout for consumer group rebalance.
+            * `HeartbeatInterval` (e.g., `kgo.HeartbeatInterval`): Interval for consumer heartbeats to the broker.
+        4.  **Batching Best Practices:**
+            * **`batch.size`**: Max size (bytes) of a batch before sending.
+            * **`linger.ms`**: Max time (milliseconds) a producer waits before sending a batch. Batches are sent when either `batch.size` or `linger.ms` is reached.
+            * **`max.request.size`**: Max size (bytes) of an individual request to a broker, affecting batch size.
+        5.  **Compression Best Practices:**
+            * **Enable Compression:** Use compression (e.g., Gzip, Snappy, LZ4, Zstd) for producers to reduce network bandwidth and storage usage.
+            * **Batching & Compression:** Compression is more effective on larger batches. Tune `batch.size` and `linger.ms` to facilitate better compression ratios.
+            * **Client & Broker Compatibility:** Ensure chosen compression type is supported by both client and broker.
+        6.  **Error Handling:** Implement robust error handling for transient errors (e.g., connection failures) and handle permanent errors gracefully.
+        7.  **Serialization:** Use a well-defined serialization format (e.g., Avro, Protobuf, JSON) and manage schemas for data compatibility.
+        8.  **Message Keys:** Use a message key when ordering or partitioning messages to a specific partition is required.
+        9.  **Consumer Groups and Offsets:** Ensure consumers are part of a consumer group and commit offsets correctly to prevent re-processing messages or data loss.
+        10. **Monitoring:** Instrument Kafka client interactions with metrics and logging for observability.
+
+    - path: "**/{kafka,producer,consumer,broker,topic,stream}*/**"
       instructions: |
         **General Kafka Best Practices (Applicable across languages):** 📧
         This code appears to interact with Apache Kafka. Please ensure the following:
@@ -134,7 +221,24 @@ reviews:
         10. **Monitoring:** Instrument Kafka client interactions with metrics and logging for observability.
 
     # --- PostgreSQL / CloudSQL Best Practices (Directory Keywords) ---
-    - path: "**/{postgres,postgresql,cloudsql,db,database,sql,psql,Postgres,PostgreSQL,CloudSQL,DB,Database,SQL,PSQL}/**/*.{go,js,ts,py,java,cs,rb}"
+    - path: "**/*{postgres*,cloudsql*,db*,database*,sql*,psql*}*"
+      instructions: |
+        **General PostgreSQL / CloudSQL Best Practices (Applicable across languages):** 🐘
+        This code appears to interact with a PostgreSQL or CloudSQL database. Please ensure the following:
+        
+        1.  **Security:** Check if all queries use parameterized statements to prevent SQL injection.
+        2.  **Performance:** Look for N+1 query patterns and suggest batching or JOINs. Check for opportunities for new or improved indexes on `WHERE`, `JOIN`, and `ORDER BY` clauses. Avoid expensive operations like `FULL SCAN` and `CARTESIAN JOIN`.
+        3.  **Clarity:** Use aliases and ensure SQL queries are easy to read and understand.
+        4.  **Error Handling:** Handle database connection and query execution errors gracefully.
+        5.  **Connection Management:** Ensure database connections are being closed properly.
+        6.  **Transactions:** Use transactions appropriately, keeping them short and explicit with `BEGIN`, `COMMIT`, and `ROLLBACK`.
+        7.  **Data Types:** Point out potential data type mismatches between the application code and the database schema.
+        8.  **Specific Column Selection:** Avoid `SELECT *` and instead encourage explicit column selection to improve performance.
+        9.  **PostgreSQL-Specific:** Check for efficient use of JSON/JSONB with native operators and GIN indexes. For new functions or procedures, verify they are well-documented and idempotent. Ensure data integrity rules like `CHECK` and `FOREIGN KEY` constraints are used correctly.
+        10.  **Query Timeouts:** Always set an explicit timeout for each database query or operation to prevent indefinite hangs and cascading failures.
+        11.  **Graceful Connection Closing:** Ensure database connections are closed gracefully after use to prevent resource leaks. This is often handled by ORMs or the client library's connection pool, but it should be explicitly considered for every interaction.
+        
+    - path: "**/{postgres,cloudsql,db,database,sql,psql}*/**"
       instructions: |
         **General PostgreSQL / CloudSQL Best Practices (Applicable across languages):** 🐘
         This code appears to interact with a PostgreSQL or CloudSQL database. Please ensure the following:
@@ -152,7 +256,22 @@ reviews:
         11.  **Graceful Connection Closing:** Ensure database connections are closed gracefully after use to prevent resource leaks. This is often handled by ORMs or the client library's connection pool, but it should be explicitly considered for every interaction.
         
     # --- Spanner Best Practices (Directory Keywords) ---
-    - path: "**/{spanner,Spanner}/**/*.{go,js,ts,py,java}"
+    - path: "**/*{spanner*}*"
+      instructions: |
+        **General Spanner Best Practices (Applicable across languages):** 🚀
+        This code appears to interact with a Spanner database. Please ensure the following:
+        
+        1.  **Transactions:** Use `Read-Only` transactions for a consistent view of data, and `Read-Write` transactions for data modification. Keep transactions short to minimize contention.
+        2.  **Secondary Indexes:** Be judicious with secondary indexes, as they can incur significant write overhead.
+        3.  **Connection Pooling:** Rely on the Spanner client libraries for connection pooling and management.
+        4.  **Data Types:** Use the most appropriate data types, especially for storing data with unique properties (e.g., `BYTES` for binary data).
+        5.  **Query Timeouts:** Always set an explicit timeout for each Spanner query or operation to prevent indefinite hangs.
+        6.  **Graceful Connection Closing:** Ensure the Spanner client is closed gracefully at the end of its lifecycle to prevent resource leaks.
+        7.  **Query Priority:** Set `HIGH`, `MEDIUM`, or `LOW` priority for queries to manage resource contention effectively
+        10. **`FORCE_INDEX`:** Use `FORCE_INDEX` when you wish prompt Spanner to use a specific index
+        11.  **Security:** Check if all queries use parameterized statements to prevent SQL injection.
+
+    - path: "**/{spanner}*/**"
       instructions: |
         **General Spanner Best Practices (Applicable across languages):** 🚀
         This code appears to interact with a Spanner database. Please ensure the following:
@@ -168,7 +287,7 @@ reviews:
         11.  **Security:** Check if all queries use parameterized statements to prevent SQL injection.
 
     # --- ScyllaDB Best Practices (Directory Keywords) ---
-    - path: "**/{scylladb,scylla,ScyllaDB,Scylla}/**/*.{go,js,ts,py,java}"
+    - path: "**/*{scylladb*,scylla*}*"
       instructions: |
         **General ScyllaDB Best Practices (Applicable across languages):** ⚡️
         This code appears to interact with a ScyllaDB database. Please ensure the following:
@@ -180,8 +299,21 @@ reviews:
         5.  **Consistency Levels:** Explicitly set appropriate **consistency levels** (e.g., `QUORUM`, `LOCAL_QUORUM`, `ONE`) for reads and writes. Understand the trade-offs between consistency, availability, and latency.
         6.  **Retries:** Use retries carefully. When there is a surge and the database is failing for a lot of requests, retries overburden the database even more. 
         7.  **BYPASS CACHE for Range Queries:** For large range queries that are not latency-sensitive, consider using `BYPASS CACHE` to prevent evicting hot data from the row cache.
-        8.  **Prepared Statements:** Use **prepared statements** for frequently executed queries to reduce parsing overhead and prevent CQL injection. 
+        8.  **Prepared Statements:** Use **prepared statements** for frequently executed queries to reduce parsing overhead and prevent CQL injection.
 
+    - path: "**/{scylladb,scylla}*/**"
+      instructions: |
+        **General ScyllaDB Best Practices (Applicable across languages):** ⚡️
+        This code appears to interact with a ScyllaDB database. Please ensure the following:
+        
+        1.  **Time-to-Live (TTL):** Use TTLs for data that expires automatically (e.g., sessions, caches) to avoid manual cleanup and tombstone accumulation.
+        2.  **Connection Pooling:** Rely on the official ScyllaDB client drivers for connection pooling and management.
+        3.  **Query Timeouts:** Configure a timeout for each query or operation to prevent it from hanging indefinitely.
+        4.  **Graceful Connection Closing:** Ensure the ScyllaDB cluster session is closed gracefully to release resources and connections.
+        5.  **Consistency Levels:** Explicitly set appropriate **consistency levels** (e.g., `QUORUM`, `LOCAL_QUORUM`, `ONE`) for reads and writes. Understand the trade-offs between consistency, availability, and latency.
+        6.  **Retries:** Use retries carefully. When there is a surge and the database is failing for a lot of requests, retries overburden the database even more. 
+        7.  **BYPASS CACHE for Range Queries:** For large range queries that are not latency-sensitive, consider using `BYPASS CACHE` to prevent evicting hot data from the row cache.
+        8.  **Prepared Statements:** Use **prepared statements** for frequently executed queries to reduce parsing overhead and prevent CQL injection.
 
 
   # Custom rules and thresholds
