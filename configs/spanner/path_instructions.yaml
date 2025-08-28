@@ -1,0 +1,102 @@
+# Google Spanner Best Practices
+- path: "**/{spanner}*/**"
+  instructions: |
+    **Comprehensive Google Spanner Code Review Checklist:**
+    
+    **🔧 Client Lifecycle & Resource Management:**
+    1. **Connection Management:**
+       - ✅ Configure appropriate connection pool size and timeouts
+       - ✅ Implement graceful client cleanup and shutdown
+       - ✅ Handle connection failures with exponential backoff
+       - ⚠️ Never create new Spanner clients per request
+    
+    2. **Session Management:**
+       - ✅ Reuse session instances throughout application lifecycle
+       - ✅ Configure session-level timeouts and retry policies
+       - ✅ Implement proper session cleanup in application shutdown
+    
+    **📊 Transaction Management:**
+    3. **Transaction Types & Usage:**
+       - ✅ Use `ReadOnlyTransaction` for read-only operations
+       - ✅ Use `ReadWriteTransaction` for data modifications
+    
+    4. **Transaction Best Practices:**
+       - ✅ **Error Handling**: Implement proper rollback and retry logic
+       - ✅ **Monitoring**: Track transaction duration and failure rates
+    
+    **🚀 Performance & Query Optimization:**
+    5. **Query Timeouts:**
+       - ✅ Set explicit timeouts for all Spanner queries (typically 5-60 seconds). This is during client initialization
+       - ✅ Configure different timeouts for reads vs writes
+       - ✅ Implement query cancellation for long-running operations
+       - ✅ Use `StatementTimeout` for individual query timeouts
+       - ⚠️ Never use infinite timeouts - can cause resource exhaustion
+    
+    
+    6. **Query Priority Management:**
+       - ✅ Set appropriate query priorities: `HIGH`, `MEDIUM`, or `LOW`
+       - ✅ **HIGH Priority**: Critical user-facing queries, real-time operations
+       - ✅ **MEDIUM Priority**: Standard business operations, batch processing
+       - ✅ **LOW Priority**: Background jobs, analytics, non-critical operations
+       - ✅ Balance priority levels to manage resource contention effectively
+    
+    7. **FORCE_INDEX Usage:**
+       - ✅ Use `FORCE_INDEX` when you need Spanner to use a specific index
+       - ✅ **Use Cases**: Query optimization, performance testing, index validation
+       - ✅ **Caution**: Only use when you're confident about index choice
+       - ✅ **Monitoring**: Track query performance with forced vs automatic index selection
+       - ✅ **Documentation**: Document why specific indexes are forced
+    
+    8. **Query Security:**
+        - ✅ Use parameterized queries to prevent SQL injection
+        - ✅ Use prepared statements for repeated queries
+    
+    **📈 Error Handling & Resilience:**
+    9. **Error Classification & Handling:**
+        - ✅ Handle `AbortedException` for transaction conflicts
+        - ✅ Handle `DeadlineExceededException` for timeout scenarios
+        - ✅ Handle `ResourceExhaustedException` for quota limits
+        - ✅ Handle `FailedPreconditionException` for invalid operations
+    
+    10. **Retry Strategies:**
+        - ✅ Implement intelligent retry logic with exponential backoff
+        - ✅ Use jitter in retry delays to prevent thundering herd
+        - ✅ Distinguish between retryable and non-retryable errors
+        - ✅ Implement backoff strategies for different error types
+        - ✅ Monitor retry patterns and adjust strategies accordingly
+    
+    **📊 Observability & Monitoring:**
+    11. **Metrics & Monitoring:**
+        - ✅ Track query latency and throughput
+        - ✅ Monitor transaction success rates and durations
+        - ✅ Monitor connection pool utilization
+    
+    
+    **🚨 Common Anti-Patterns to Flag:**
+    - ❌ Creating new Spanner clients per request
+    - ❌ Missing query timeouts or infinite timeouts
+    - ❌ Long-running transactions (>10 seconds)
+    - ❌ No retry logic for transient failures
+    - ❌ Missing query priority configuration
+    - ❌ Hardcoded credentials or connection strings
+    - ❌ No monitoring or metrics implementation
+    - ❌ Missing error handling for different exception types
+    - ❌ No transaction conflict resolution
+    - ❌ **SELECT ***: Always specify required columns explicitly
+    
+    **🔍 Review Focus Areas:**
+    - Verify client lifecycle management and connection pooling
+    - Check transaction design and duration optimization
+    - Ensure proper error handling and retry strategies
+    - Validate security configurations and authentication
+    - Identify opportunities for Prometheus metrics
+    
+    **📊 Prometheus Metrics Opportunities:**
+    - 🔍 **Automatically suggest metrics when seeing:**
+      - Spanner queries → `spanner_queries_total{operation, priority, status}`
+      - Query latency → `spanner_query_duration_seconds{operation, priority}`
+      - Transaction metrics → `spanner_transactions_total{type, status}`
+      - Connection usage → `spanner_connections_active{state}`
+      - Index operations → `spanner_index_operations_total{operation, index_name}`
+      - Error handling → `spanner_errors_total{type, operation}`
+      - Retry attempts → `spanner_retries_total{operation, reason}`

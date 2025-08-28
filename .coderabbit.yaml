@@ -1,4 +1,5 @@
-# .coderabbit.yaml
+# .coderabbit.base.yaml - Base configuration template
+# Path instructions will be merged from individual technology configs
 
 version: 1
 reviews:
@@ -37,283 +38,1640 @@ reviews:
     - label: "tests"
       instructions: |
         Apply when the pull request primarily adds new tests, updates existing tests, or refactors test code.
-        Look for changes in `test/`, `__tests__/`, `*.spec.js`, `*.test.ts`, or other dedicated test directories/files.
+        Look for changes in `test/`, `__tests__/`, `*.test.ts`, or other dedicated test directories/files.
 
-  # Path-specific review instructions
+  # Path-specific review instructions will be merged here from individual configs
   path_instructions:
-    # --- Temporal Best Practices ---
-    - path: "**/*{temporal*,worker*,workflow*,task*,activit*}*"
-      instructions: |
-        **General Temporal Best Practices (Applicable across languages):**
-        This code appears to be related to Temporal Workflows or Activities. Please ensure the following:
-        
-        1.  **Determinism is Crucial for Workflows:**
-            * Avoid non-deterministic operations (e.g., direct access to system time/random numbers). Use Temporal's built-in deterministic functions for these.
-            * No direct I/O (database calls, network requests, file system access) within Workflow code. All side-effects must be delegated to Activities.
-            * Avoid global mutable state or concurrent access that isn't managed deterministically by the Temporal SDK.
-        2.  **Activity Idempotency:** Activities should be designed to be idempotent whenever possible, as they can be retried multiple times. Consider using idempotency keys for operations with side effects.
-        3.  **Timeouts and Heartbeating:** Properly configure timeouts for Activities (e.g., `StartToCloseTimeout`). For long-running Activities, implement heartbeating to signal progress and prevent unnecessary timeouts.
-        4.  **Single Responsibility:** Design Workflows for orchestration and Activities for specific side-effecting tasks. Keep them focused and granular.
-        5.  **Robust Error Handling:** Implement comprehensive error handling, including retries, compensation logic, and proper propagation of errors from Activities to Workflows.
-        6.  **Worker Configuration:** Ensure that the Worker options are appropriately tuned for your workload. Consider configuring the following:
-            * **Concurrency:** `MaxConcurrentActivityExecutionSize` and `MaxConcurrentWorkflowTaskExecutionSize` to control the number of parallel executions.
-            * **Polling:** `MaxConcurrentActivityTaskPollers` and `MaxConcurrentWorkflowTaskPollers` to manage the number of open connections for fetching tasks.
-
-    - path: "**/{temporal,worker,workflow,task,activit}*/**"
-      instructions: |
-        **General Temporal Best Practices (Applicable across languages):**
-        This code appears to be related to Temporal Workflows or Activities. Please ensure the following:
-        
-        1.  **Determinism is Crucial for Workflows:**
-            * Avoid non-deterministic operations (e.g., direct access to system time/random numbers). Use Temporal's built-in deterministic functions for these.
-            * No direct I/O (database calls, network requests, file system access) within Workflow code. All side-effects must be delegated to Activities.
-            * Avoid global mutable state or concurrent access that isn't managed deterministically by the Temporal SDK.
-        2.  **Activity Idempotency:** Activities should be designed to be idempotent whenever possible, as they can be retried multiple times. Consider using idempotency keys for operations with side effects.
-        3.  **Timeouts and Heartbeating:** Properly configure timeouts for Activities (e.g., `StartToCloseTimeout`). For long-running Activities, implement heartbeating to signal progress and prevent unnecessary timeouts.
-        4.  **Single Responsibility:** Design Workflows for orchestration and Activities for specific side-effecting tasks. Keep them focused and granular.
-        5.  **Robust Error Handling:** Implement comprehensive error handling, including retries, compensation logic, and proper propagation of errors from Activities to Workflows.
-        6.  **Worker Configuration:** Ensure that the Worker options are appropriately tuned for your workload. Consider configuring the following:
-            * **Concurrency:** `MaxConcurrentActivityExecutionSize` and `MaxConcurrentWorkflowTaskExecutionSize` to control the number of parallel executions.
-            * **Polling:** `MaxConcurrentActivityTaskPollers` and `MaxConcurrentWorkflowTaskPollers` to manage the number of open connections for fetching tasks.
-
-
-    # --- Redis Best Practices ---
-    - path: "**/*{redis*,df*,dragonfly*,cache*,queue*}*"
-      instructions: |
-        **General Redis Interaction Best Practices (Applicable across languages):**
-        This code appears to interact with Redis. Please ensure the following:
-        
-        1.  **Key Naming Conventions:** Use clear, hierarchical, and concise key names to save space. Avoid excessively long key names.
-        2.  **Unbounded Returns:** Be cautious with commands like `HGETALL`, `LRANGE`, `SMEMBERS`, and `ZRANGE` without limits. They can return a massive number of items, blocking Redis. Best practices:
-            * Sanity check the size first using commands like `HLEN`, `LLEN`, `SCARD`, or `ZCARD`.
-            * Use range limits or iterative commands like `HSCAN`, `SSCAN`, and `ZSCAN` instead.
-        3.  **Appropriate Data Structures:** Choose the most efficient Redis data type (Strings, Hashes, Lists, Sets, Sorted Sets) for your use case.
-        4.  **Expiration (TTL):** Always set an appropriate Time-To-Live (TTL) for transient or cache data to prevent memory bloat.
-        5.  **Avoid Blocking Commands:** Do not use `KEYS` in production. Prefer `SCAN` for iterative key discovery. Avoid `FLUSHALL`/`FLUSHDB` without extreme caution.
-        6.  **Pipelining for Performance:** Batch multiple Redis commands using pipelining to reduce network round-trip time.
-        7.  **Connection Management:** Utilize connection pooling for efficient resource usage. Ensure the Redis client is configured with appropriate settings:
-            * `ReadTimeout`, `WriteTimeout` for network operations.
-            * `PoolSize`, `PoolTimeout`, `MinIdleConns`, `MaxIdleConn` for connection pool tuning.
-        8.  **Error Handling & Fallbacks:** Implement robust error handling and define fallback strategies if Redis is unavailable.
-        9.  **Security:** Never expose Redis directly to the public internet. Ensure authentication is configured.
-        10. **Compress:** Compress data using various algorithms(gzip, zstd)
-
-    - path: "**/{redis,df,dragonfly,cache,queue}*/**"
-      instructions: |
-        **General Redis Interaction Best Practices (Applicable across languages):**
-        This code appears to interact with Redis. Please ensure the following:
-        
-        1.  **Key Naming Conventions:** Use clear, hierarchical, and concise key names to save space. Avoid excessively long key names.
-        2.  **Unbounded Returns:** Be cautious with commands like `HGETALL`, `LRANGE`, `SMEMBERS`, and `ZRANGE` without limits. They can return a massive number of items, blocking Redis. Best practices:
-            * Sanity check the size first using commands like `HLEN`, `LLEN`, `SCARD`, or `ZCARD`.
-            * Use range limits or iterative commands like `HSCAN`, `SSCAN`, and `ZSCAN` instead.
-        3.  **Appropriate Data Structures:** Choose the most efficient Redis data type (Strings, Hashes, Lists, Sets, Sorted Sets) for your use case.
-        4.  **Expiration (TTL):** Always set an appropriate Time-To-Live (TTL) for transient or cache data to prevent memory bloat.
-        5.  **Avoid Blocking Commands:** Do not use `KEYS` in production. Prefer `SCAN` for iterative key discovery. Avoid `FLUSHALL`/`FLUSHDB` without extreme caution.
-        6.  **Pipelining for Performance:** Batch multiple Redis commands using pipelining to reduce network round-trip time.
-        7.  **Connection Management:** Utilize connection pooling for efficient resource usage. Ensure the Redis client is configured with appropriate settings:
-            * `ReadTimeout`, `WriteTimeout` for network operations.
-            * `PoolSize`, `PoolTimeout`, `MinIdleConns`, `MaxIdleConn` for connection pool tuning.
-        8.  **Error Handling & Fallbacks:** Implement robust error handling and define fallback strategies if Redis is unavailable.
-        9.  **Security:** Never expose Redis directly to the public internet. Ensure authentication is configured.
-        10. **Compress:** Compress data using various algorithms(gzip, zstd)
-
-    # --- HTTP Client Best Practices ---
-    - path: "**/*{http*,client*,api*,network*}*"
-      instructions: |
-        **General HTTP Client Best Practices (Applicable across languages):**
-        This code appears to make HTTP requests. Please ensure the following:
-        
-        1.  **Client Reuse & Connection Pooling:** Reuse HTTP client instances to leverage connection pooling and avoid socket exhaustion. Properly configure connection pool settings, such as `MaxIdleConns`, `MaxConnsPerHost`, and `MaxIdleConnsPerHost`.
-        2.  **Timeouts:** Always configure explicit connection and request timeouts to prevent indefinite hangs. Look for settings like `ConnectTimeout` (for establishing the TCP connection) and `CallTimeout` (for the total request duration).
-        3.  **Status Code Handling:** Properly handle all HTTP status codes (2xx, 4xx, 5xx) to manage success, client errors, and server errors gracefully.
-        4.  **Retry Logic:** Implement intelligent retry mechanisms (e.g., exponential backoff with jitter) for transient errors, but only for idempotent requests.
-        5.  **Secure Communication (HTTPS):** Always use HTTPS. Do not disable SSL/TLS certificate validation in production.
-        6.  **Observability:** Implement robust logging for requests/responses (especially errors) and tracing to monitor HTTP interactions.
-        7.  **Error Handling:** Use language-appropriate error handling (e.g., `try-catch`, `if err != nil`) for network and HTTP-specific errors.
-        8.  **Close the response after reading the body**
-
     - path: "**/{http,client,api,network}*/**"
       instructions: |
-        **General HTTP Client Best Practices (Applicable across languages):**
-        This code appears to make HTTP requests. Please ensure the following:
-        
-        1.  **Client Reuse & Connection Pooling:** Reuse HTTP client instances to leverage connection pooling and avoid socket exhaustion. Properly configure connection pool settings, such as `MaxIdleConns`, `MaxConnsPerHost`, and `MaxIdleConnsPerHost`.
-        2.  **Timeouts:** Always configure explicit connection and request timeouts to prevent indefinite hangs. Look for settings like `ConnectTimeout` (for establishing the TCP connection) and `CallTimeout` (for the total request duration).
-        3.  **Status Code Handling:** Properly handle all HTTP status codes (2xx, 4xx, 5xx) to manage success, client errors, and server errors gracefully.
-        4.  **Retry Logic:** Implement intelligent retry mechanisms (e.g., exponential backoff with jitter) for transient errors, but only for idempotent requests.
-        5.  **Secure Communication (HTTPS):** Always use HTTPS. Do not disable SSL/TLS certificate validation in production.
-        6.  **Observability:** Implement robust logging for requests/responses (especially errors) and tracing to monitor HTTP interactions.
-        7.  **Error Handling:** Use language-appropriate error handling (e.g., `try-catch`, `if err != nil`) for network and HTTP-specific errors.
-        8.  **Close the response after reading the body**
+        **Comprehensive HTTP Client Code Review Checklist:**
 
-    # --- Kafka Best Practices (Directory Keywords) ---
-    - path: "**/*{kafka*,producer*,consumer*,broker*,topic*,stream*}*"
+        **🔧 Performance & Resource Management:**
+        1. **Client Reuse & Connection Pooling:** 
+           - ✅ Reuse HTTP client instances (don't create new clients per request)
+           - ✅ Configure connection pool settings: `MaxIdleConns`, `MaxConnsPerHost`, `MaxIdleConnsPerHost`
+           - ✅ Set appropriate `IdleConnTimeout` to prevent stale connections
+           - ✅ Use `DisableKeepAlives: false` for better performance (unless specifically needed)
+
+        2. **Timeouts (CRITICAL):**
+           - ✅ Set `ConnectTimeout` for TCP connection establishment (e.g., 5-30s)
+           - ✅ Set `RequestTimeout` for total request duration (e.g., 10-60s)
+           - ✅ Set `ReadTimeout` for response body reading
+           - ✅ Set `WriteTimeout` for request body writing
+           - ⚠️ Never use infinite timeouts - this can cause resource leaks
+
+        3. **Resource Cleanup:**
+           - ✅ Always close response body: `defer resp.Body.Close()` (Go) or equivalent
+           - ✅ Handle response body even if you don't need it (read to EOF or close)
+           - ✅ Use `io.Copy(io.Discard, resp.Body)` for discarding unwanted responses
+
+        4. **Request Headers & Authentication:**
+           - ✅ Set appropriate `User-Agent` header
+           - ✅ Use secure authentication methods (Bearer tokens, API keys)
+           - ✅ Don't log sensitive headers (Authorization, Cookie, etc.)
+           - ✅ Set `Content-Type` and `Accept` headers appropriately
+
+        **📊 Error Handling & Resilience:**
+        5. **Status Code Handling:**
+           - ✅ Handle all status codes: 2xx (success), 4xx (client error), 5xx (server error)
+           - ✅ Check `resp.StatusCode` before processing response body
+           - ✅ Provide meaningful error messages for different status codes
+           - ✅ Handle redirects appropriately (3xx status codes)
+
+        6. **Retry Logic:**
+           - ✅ Implement exponential backoff with jitter for transient errors
+           - ✅ Only retry idempotent operations (GET, PUT, DELETE, not POST)
+           - ✅ Set maximum retry attempts to prevent infinite loops
+           - ✅ Use appropriate retry conditions (5xx errors, network timeouts)
+
+        7. **Error Handling:**
+           - ✅ Use language-appropriate error handling patterns
+           - ✅ Wrap errors with context: `fmt.Errorf("failed to make request: %w", err)`
+           - ✅ Handle network errors separately from HTTP errors
+           - ✅ Provide actionable error messages for debugging
+
+        **📈 Observability & Monitoring:**
+        8. **Logging & Tracing:**
+           - ✅ Log request details (method, URL, headers) at DEBUG level
+           - ✅ Log response status and timing at INFO level
+           - ✅ Log errors with full context (request details, response status)
+           - ✅ Use structured logging with consistent field names
+           - ✅ Implement request/response correlation IDs for tracing
+
+        9. **Metrics & Monitoring:**
+          - ✅ Track request duration, status codes, and error rates
+          - ✅ Monitor connection pool utilization
+          - ✅ Alert on high error rates or timeout percentages
+          - ✅ Use histetheus metrics for comprehensive monitoring
+
+          **📊 Prometheus Metrics Opportunities:**
+          - 🔍 **Automatically suggest metrics when seeing:**
+            - HTTP requests → `http_requests_total{method, endpoint, status_code}`
+            - Response times → `http_request_duration_seconds{method, endpoint}`
+            - Error handling → `http_errors_total{type, endpoint, status_code}`
+            - Timeout handling → `http_timeouts_total{type, endpoint}`
+            - Connection pools → `http_connection_pool_size{state}`
+            - Retry logic → `http_retries_total{endpoint, reason}`
+            - Circuit breakers → `http_circuit_breaker_state{endpoint}`
+
+        **🚨 Common Anti-Patterns to Flag:**
+        - ❌ Creating new HTTP client per request
+        - ❌ Missing timeout configurations
+        - ❌ Not closing response bodies
+        - ❌ Ignoring HTTP status codes
+        - ❌ Hardcoded URLs or credentials
+        - ❌ No error handling for network failures
+        - ❌ Infinite retry loops
+        - ❌ Logging sensitive information
+
+        **🔍 Review Focus Areas:**
+        - Look for proper client configuration and reuse
+        - Verify timeout settings are reasonable and not infinite
+        - Check response body handling and cleanup
+        - Ensure proper error handling and logging
+        - Validate security practices (HTTPS, auth, headers)
+        - Review retry logic for correctness and safety
+        - Identify opportunities for Prometheus metrics
+        - Suggest appropriate monitoring and alerting
+
+    - path: "**/*{http*,client*,api*,network*}*"
       instructions: |
-        **General Kafka Best Practices (Applicable across languages):** 📧
-        This code appears to interact with Apache Kafka. Please ensure the following:
+        **Comprehensive HTTP Client Code Review Checklist:**
 
-        1.  **Singleton Client:** Reuse Kafka client instances (Producer, Consumer) throughout the application's lifecycle to avoid connection overhead.
-        2.  **Producer Configuration:** Configure producers for optimal throughput and reliability. Look for:
-            * `MaxBatchBytes` (e.g., `kgo.ProducerBatchMaxBytes`): Maximum size of a batch in bytes.
-            * `MaxBufferedRecords` (e.g., `kgo.MaxBufferedRecords`): Max messages to buffer before sending.
-            * `ProducerLinger` (e.g., `kgo.ProducerLinger`): Time to wait before sending a batch.
-            * `ProducerBatchCompression` (e.g., `kgo.GzipCompression`): Compression type (Gzip, Snappy, LZ4, Zstd, None).
-            * `RecordRetries` (e.g., `kgo.RecordRetries`): Number of retries for failed messages.
-            * `ProduceRequestTimeout` (e.g., `kgo.ProduceRequestTimeout`): Timeout for produce requests.
-            * `RequiredAcks` (e.g., `kgo.LeaderAck`, `kgo.AllISRAcks`): Acknowledgment level from brokers.
-            * **Idempotence:** Ensure idempotent producers are enabled (`enable.idempotence=true` or equivalent) to prevent message duplication on the broker. Avoid explicitly disabling it (`kgo.DisableIdempotentWrite()`) unless absolutely necessary and understood.
-        3.  **Consumer Configuration:** Configure consumers for efficient and reliable consumption. Look for:
-            * `FetchMinBytes` (e.g., `kgo.FetchMinBytes`): Minimum bytes to read before returning messages.
-            * `FetchMaxBytes` (e.g., `kgo.FetchMaxBytes`): Maximum bytes to read before returning messages.
-            * `MaxConcurrentFetches` (e.g., `kgo.MaxConcurrentFetches`): Max concurrent fetches allowed.
-            * `SessionTimeout` (e.g., `kgo.SessionTimeout`): Timeout for consumer session.
-            * `RebalanceTimeout` (e.g., `kgo.RebalanceTimeout`): Timeout for consumer group rebalance.
-            * `HeartbeatInterval` (e.g., `kgo.HeartbeatInterval`): Interval for consumer heartbeats to the broker.
-        4.  **Batching Best Practices:**
-            * **`batch.size`**: Max size (bytes) of a batch before sending.
-            * **`linger.ms`**: Max time (milliseconds) a producer waits before sending a batch. Batches are sent when either `batch.size` or `linger.ms` is reached.
-            * **`max.request.size`**: Max size (bytes) of an individual request to a broker, affecting batch size.
-        5.  **Compression Best Practices:**
-            * **Enable Compression:** Use compression (e.g., Gzip, Snappy, LZ4, Zstd) for producers to reduce network bandwidth and storage usage.
-            * **Batching & Compression:** Compression is more effective on larger batches. Tune `batch.size` and `linger.ms` to facilitate better compression ratios.
-            * **Client & Broker Compatibility:** Ensure chosen compression type is supported by both client and broker.
-        6.  **Error Handling:** Implement robust error handling for transient errors (e.g., connection failures) and handle permanent errors gracefully.
-        7.  **Serialization:** Use a well-defined serialization format (e.g., Avro, Protobuf, JSON) and manage schemas for data compatibility.
-        8.  **Message Keys:** Use a message key when ordering or partitioning messages to a specific partition is required.
-        9.  **Consumer Groups and Offsets:** Ensure consumers are part of a consumer group and commit offsets correctly to prevent re-processing messages or data loss.
-        10. **Monitoring:** Instrument Kafka client interactions with metrics and logging for observability.
+        **🔧 Performance & Resource Management:**
+        1. **Client Reuse & Connection Pooling:** 
+           - ✅ Reuse HTTP client instances (don't create new clients per request)
+           - ✅ Configure connection pool settings: `MaxIdleConns`, `MaxConnsPerHost`, `MaxIdleConnsPerHost`
+           - ✅ Set appropriate `IdleConnTimeout` to prevent stale connections
+           - ✅ Use `DisableKeepAlives: false` for better performance (unless specifically needed)
+
+        2. **Timeouts (CRITICAL):**
+           - ✅ Set `ConnectTimeout` for TCP connection establishment (e.g., 5-30s)
+           - ✅ Set `RequestTimeout` for total request duration (e.g., 10-60s)
+           - ✅ Set `ReadTimeout` for response body reading
+           - ✅ Set `WriteTimeout` for request body writing
+           - ⚠️ Never use infinite timeouts - this can cause resource leaks
+
+        3. **Resource Cleanup:**
+           - ✅ Always close response body: `defer resp.Body.Close()` (Go) or equivalent
+           - ✅ Handle response body even if you don't need it (read to EOF or close)
+           - ✅ Use `io.Copy(io.Discard, resp.Body)` for discarding unwanted responses
+
+        4. **Request Headers & Authentication:**
+           - ✅ Set appropriate `User-Agent` header
+           - ✅ Use secure authentication methods (Bearer tokens, API keys)
+           - ✅ Don't log sensitive headers (Authorization, Cookie, etc.)
+           - ✅ Set `Content-Type` and `Accept` headers appropriately
+
+        **📊 Error Handling & Resilience:**
+        5. **Status Code Handling:**
+           - ✅ Handle all status codes: 2xx (success), 4xx (client error), 5xx (server error)
+           - ✅ Check `resp.StatusCode` before processing response body
+           - ✅ Provide meaningful error messages for different status codes
+           - ✅ Handle redirects appropriately (3xx status codes)
+
+        6. **Retry Logic:**
+           - ✅ Implement exponential backoff with jitter for transient errors
+           - ✅ Only retry idempotent operations (GET, PUT, DELETE, not POST)
+           - ✅ Set maximum retry attempts to prevent infinite loops
+           - ✅ Use appropriate retry conditions (5xx errors, network timeouts)
+
+        7. **Error Handling:**
+           - ✅ Use language-appropriate error handling patterns
+           - ✅ Wrap errors with context: `fmt.Errorf("failed to make request: %w", err)`
+           - ✅ Handle network errors separately from HTTP errors
+           - ✅ Provide actionable error messages for debugging
+
+        **📈 Observability & Monitoring:**
+        8. **Logging & Tracing:**
+           - ✅ Log request details (method, URL, headers) at DEBUG level
+           - ✅ Log response status and timing at INFO level
+           - ✅ Log errors with full context (request details, response status)
+           - ✅ Use structured logging with consistent field names
+           - ✅ Implement request/response correlation IDs for tracing
+
+        9. **Metrics & Monitoring:**
+          - ✅ Track request duration, status codes, and error rates
+          - ✅ Monitor connection pool utilization
+          - ✅ Alert on high error rates or timeout percentages
+          - ✅ Use histetheus metrics for comprehensive monitoring
+
+          **📊 Prometheus Metrics Opportunities:**
+          - 🔍 **Automatically suggest metrics when seeing:**
+            - HTTP requests → `http_requests_total{method, endpoint, status_code}`
+            - Response times → `http_request_duration_seconds{method, endpoint}`
+            - Error handling → `http_errors_total{type, endpoint, status_code}`
+            - Timeout handling → `http_timeouts_total{type, endpoint}`
+            - Connection pools → `http_connection_pool_size{state}`
+            - Retry logic → `http_retries_total{endpoint, reason}`
+            - Circuit breakers → `http_circuit_breaker_state{endpoint}`
+
+        **🚨 Common Anti-Patterns to Flag:**
+        - ❌ Creating new HTTP client per request
+        - ❌ Missing timeout configurations
+        - ❌ Not closing response bodies
+        - ❌ Ignoring HTTP status codes
+        - ❌ Hardcoded URLs or credentials
+        - ❌ No error handling for network failures
+        - ❌ Infinite retry loops
+        - ❌ Logging sensitive information
+
+        **🔍 Review Focus Areas:**
+        - Look for proper client configuration and reuse
+        - Verify timeout settings are reasonable and not infinite
+        - Check response body handling and cleanup
+        - Ensure proper error handling and logging
+        - Validate security practices (HTTPS, auth, headers)
+        - Review retry logic for correctness and safety
+        - Identify opportunities for Prometheus metrics
+        - Suggest appropriate monitoring and alerting
 
     - path: "**/{kafka,producer,consumer,broker,topic,stream}*/**"
       instructions: |
-        **General Kafka Best Practices (Applicable across languages):** 📧
-        This code appears to interact with Apache Kafka. Please ensure the following:
+        **Comprehensive Kafka Code Review Checklist:**
 
-        1.  **Singleton Client:** Reuse Kafka client instances (Producer, Consumer) throughout the application's lifecycle to avoid connection overhead.
-        2.  **Producer Configuration:** Configure producers for optimal throughput and reliability. Look for:
-            * `MaxBatchBytes` (e.g., `kgo.ProducerBatchMaxBytes`): Maximum size of a batch in bytes.
-            * `MaxBufferedRecords` (e.g., `kgo.MaxBufferedRecords`): Max messages to buffer before sending.
-            * `ProducerLinger` (e.g., `kgo.ProducerLinger`): Time to wait before sending a batch.
-            * `ProducerBatchCompression` (e.g., `kgo.GzipCompression`): Compression type (Gzip, Snappy, LZ4, Zstd, None).
-            * `RecordRetries` (e.g., `kgo.RecordRetries`): Number of retries for failed messages.
-            * `ProduceRequestTimeout` (e.g., `kgo.ProduceRequestTimeout`): Timeout for produce requests.
-            * `RequiredAcks` (e.g., `kgo.LeaderAck`, `kgo.AllISRAcks`): Acknowledgment level from brokers.
-            * **Idempotence:** Ensure idempotent producers are enabled (`enable.idempotence=true` or equivalent) to prevent message duplication on the broker. Avoid explicitly disabling it (`kgo.DisableIdempotentWrite()`) unless absolutely necessary and understood.
-        3.  **Consumer Configuration:** Configure consumers for efficient and reliable consumption. Look for:
-            * `FetchMinBytes` (e.g., `kgo.FetchMinBytes`): Minimum bytes to read before returning messages.
-            * `FetchMaxBytes` (e.g., `kgo.FetchMaxBytes`): Maximum bytes to read before returning messages.
-            * `MaxConcurrentFetches` (e.g., `kgo.MaxConcurrentFetches`): Max concurrent fetches allowed.
-            * `SessionTimeout` (e.g., `kgo.SessionTimeout`): Timeout for consumer session.
-            * `RebalanceTimeout` (e.g., `kgo.RebalanceTimeout`): Timeout for consumer group rebalance.
-            * `HeartbeatInterval` (e.g., `kgo.HeartbeatInterval`): Interval for consumer heartbeats to the broker.
-        4.  **Batching Best Practices:**
-            * **`batch.size`**: Max size (bytes) of a batch before sending.
-            * **`linger.ms`**: Max time (milliseconds) a producer waits before sending a batch. Batches are sent when either `batch.size` or `linger.ms` is reached.
-            * **`max.request.size`**: Max size (bytes) of an individual request to a broker, affecting batch size.
-        5.  **Compression Best Practices:**
-            * **Enable Compression:** Use compression (e.g., Gzip, Snappy, LZ4, Zstd) for producers to reduce network bandwidth and storage usage.
-            * **Batching & Compression:** Compression is more effective on larger batches. Tune `batch.size` and `linger.ms` to facilitate better compression ratios.
-            * **Client & Broker Compatibility:** Ensure chosen compression type is supported by both client and broker.
-        6.  **Error Handling:** Implement robust error handling for transient errors (e.g., connection failures) and handle permanent errors gracefully.
-        7.  **Serialization:** Use a well-defined serialization format (e.g., Avro, Protobuf, JSON) and manage schemas for data compatibility.
-        8.  **Message Keys:** Use a message key when ordering or partitioning messages to a specific partition is required.
-        9.  **Consumer Groups and Offsets:** Ensure consumers are part of a consumer group and commit offsets correctly to prevent re-processing messages or data loss.
-        10. **Monitoring:** Instrument Kafka client interactions with metrics and logging for observability.
+        **🔧 Client Lifecycle & Resource Management:**
+        1. **Singleton Client Pattern:**
+           - ✅ Reuse Kafka client instances (Producer, Consumer) throughout application lifecycle
+           - ✅ Avoid creating new clients per request/operation
+           - ✅ Use dependency injection or singleton patterns for client management
+           - ⚠️ Never create clients inside loops or per-message functions
 
-    # --- PostgreSQL / CloudSQL Best Practices (Directory Keywords) ---
-    - path: "**/*{postgres*,cloudsql*,db*,database*,sql*,psql*}*"
-      instructions: |
-        **General PostgreSQL / CloudSQL Best Practices (Applicable across languages):** 🐘
-        This code appears to interact with a PostgreSQL or CloudSQL database. Please ensure the following:
-        
-        1.  **Security:** Check if all queries use parameterized statements to prevent SQL injection.
-        2.  **Performance:** Look for N+1 query patterns and suggest batching or JOINs. Check for opportunities for new or improved indexes on `WHERE`, `JOIN`, and `ORDER BY` clauses. Avoid expensive operations like `FULL SCAN` and `CARTESIAN JOIN`.
-        3.  **Clarity:** Use aliases and ensure SQL queries are easy to read and understand.
-        4.  **Error Handling:** Handle database connection and query execution errors gracefully.
-        5.  **Connection Management:** Ensure database connections are being closed properly.
-        6.  **Transactions:** Use transactions appropriately, keeping them short and explicit with `BEGIN`, `COMMIT`, and `ROLLBACK`.
-        7.  **Data Types:** Point out potential data type mismatches between the application code and the database schema.
-        8.  **Specific Column Selection:** Avoid `SELECT *` and instead encourage explicit column selection to improve performance.
-        9.  **PostgreSQL-Specific:** Check for efficient use of JSON/JSONB with native operators and GIN indexes. For new functions or procedures, verify they are well-documented and idempotent. Ensure data integrity rules like `CHECK` and `FOREIGN KEY` constraints are used correctly.
-        10.  **Query Timeouts:** Always set an explicit timeout for each database query or operation to prevent indefinite hangs and cascading failures.
-        11.  **Graceful Connection Closing:** Ensure database connections are closed gracefully after use to prevent resource leaks. This is often handled by ORMs or the client library's connection pool, but it should be explicitly considered for every interaction.
-        
-    - path: "**/{postgres,cloudsql,db,database,sql,psql}*/**"
-      instructions: |
-        **General PostgreSQL / CloudSQL Best Practices (Applicable across languages):** 🐘
-        This code appears to interact with a PostgreSQL or CloudSQL database. Please ensure the following:
-        
-        1.  **Security:** Check if all queries use parameterized statements to prevent SQL injection.
-        2.  **Performance:** Look for N+1 query patterns and suggest batching or JOINs. Check for opportunities for new or improved indexes on `WHERE`, `JOIN`, and `ORDER BY` clauses. Avoid expensive operations like `FULL SCAN` and `CARTESIAN JOIN`.
-        3.  **Clarity:** Use aliases and ensure SQL queries are easy to read and understand.
-        4.  **Error Handling:** Handle database connection and query execution errors gracefully.
-        5.  **Connection Management:** Ensure database connections are being closed properly.
-        6.  **Transactions:** Use transactions appropriately, keeping them short and explicit with `BEGIN`, `COMMIT`, and `ROLLBACK`.
-        7.  **Data Types:** Point out potential data type mismatches between the application code and the database schema.
-        8.  **Specific Column Selection:** Avoid `SELECT *` and instead encourage explicit column selection to improve performance.
-        9.  **PostgreSQL-Specific:** Check for efficient use of JSON/JSONB with native operators and GIN indexes. For new functions or procedures, verify they are well-documented and idempotent. Ensure data integrity rules like `CHECK` and `FOREIGN KEY` constraints are used correctly.
-        10.  **Query Timeouts:** Always set an explicit timeout for each database query or operation to prevent indefinite hangs and cascading failures.
-        11.  **Graceful Connection Closing:** Ensure database connections are closed gracefully after use to prevent resource leaks. This is often handled by ORMs or the client library's connection pool, but it should be explicitly considered for every interaction.
-        
-    # --- Spanner Best Practices (Directory Keywords) ---
-    - path: "**/*{spanner*}*"
-      instructions: |
-        **General Spanner Best Practices (Applicable across languages):** 🚀
-        This code appears to interact with a Spanner database. Please ensure the following:
-        
-        1.  **Transactions:** Use `Read-Only` transactions for a consistent view of data, and `Read-Write` transactions for data modification. Keep transactions short to minimize contention.
-        2.  **Secondary Indexes:** Be judicious with secondary indexes, as they can incur significant write overhead.
-        3.  **Connection Pooling:** Rely on the Spanner client libraries for connection pooling and management.
-        4.  **Data Types:** Use the most appropriate data types, especially for storing data with unique properties (e.g., `BYTES` for binary data).
-        5.  **Query Timeouts:** Always set an explicit timeout for each Spanner query or operation to prevent indefinite hangs.
-        6.  **Graceful Connection Closing:** Ensure the Spanner client is closed gracefully at the end of its lifecycle to prevent resource leaks.
-        7.  **Query Priority:** Set `HIGH`, `MEDIUM`, or `LOW` priority for queries to manage resource contention effectively
-        10. **`FORCE_INDEX`:** Use `FORCE_INDEX` when you wish prompt Spanner to use a specific index
-        11.  **Security:** Check if all queries use parameterized statements to prevent SQL injection.
+        2. **Connection Management:**
+           - ✅ Configure appropriate connection pool settings
+           - ✅ Set reasonable connection timeouts and retry policies
+           - ✅ Handle connection failures gracefully with exponential backoff
+           - ✅ Implement proper client cleanup and shutdown procedures
 
-    - path: "**/{spanner}*/**"
-      instructions: |
-        **General Spanner Best Practices (Applicable across languages):** 🚀
-        This code appears to interact with a Spanner database. Please ensure the following:
-        
-        1.  **Transactions:** Use `Read-Only` transactions for a consistent view of data, and `Read-Write` transactions for data modification. Keep transactions short to minimize contention.
-        2.  **Secondary Indexes:** Be judicious with secondary indexes, as they can incur significant write overhead.
-        3.  **Connection Pooling:** Rely on the Spanner client libraries for connection pooling and management.
-        4.  **Data Types:** Use the most appropriate data types, especially for storing data with unique properties (e.g., `BYTES` for binary data).
-        5.  **Query Timeouts:** Always set an explicit timeout for each Spanner query or operation to prevent indefinite hangs.
-        6.  **Graceful Connection Closing:** Ensure the Spanner client is closed gracefully at the end of its lifecycle to prevent resource leaks.
-        7.  **Query Priority:** Set `HIGH`, `MEDIUM`, or `LOW` priority for queries to manage resource contention effectively
-        10. **`FORCE_INDEX`:** Use `FORCE_INDEX` when you wish prompt Spanner to use a specific index
-        11.  **Security:** Check if all queries use parameterized statements to prevent SQL injection.
+        **📤 Producer Configuration & Best Practices:**
+        3. **Performance Tuning:**
+           - ✅ Configure `MaxBatchBytes` for optimal batch sizes (e.g., 16KB-1MB)
+           - ✅ Set `MaxBufferedRecords` to control memory usage
+           - ✅ Use `ProducerLinger` to balance latency vs throughput
+           - ✅ Configure `RecordRetries` for failed message handling (typically 3-5)
+           - ✅ Set `ProduceRequestTimeout` to prevent indefinite hangs
 
-    # --- ScyllaDB Best Practices (Directory Keywords) ---
-    - path: "**/*{scylladb*,scylla*}*"
+        4. **Reliability & Consistency:**
+           - ✅ Enable idempotent producers (`enable.idempotence=true`) to prevent duplicates
+           - ✅ Configure `RequiredAcks` based on durability needs:
+             - `LeaderAck` for high throughput, lower durability
+             - `AllISRAcks` for highest durability, lower throughput
+           - ✅ Implement proper error handling for different failure scenarios
+
+        5. **Batching & Compression:**
+           - ✅ Enable compression (Gzip, Snappy, LZ4, Zstd) for network efficiency
+           - ✅ Tune `batch.size` and `linger.ms` for optimal compression ratios
+           - ✅ Ensure `max.request.size` accommodates your batch sizes
+
+        **📥 Consumer Configuration & Best Practices:**
+        6. **Performance & Efficiency:**
+           - ✅ Configure `FetchMinBytes` and `FetchMaxBytes` for optimal throughput
+           - ✅ Set `MaxConcurrentFetches` based on available resources
+           - ✅ Use appropriate `SessionTimeout` and `RebalanceTimeout` values
+           - ✅ Configure `HeartbeatInterval` for stable consumer group membership
+
+        7. **Offset Management:**
+           - ✅ Use `enable.auto.commit=false` for manual control when needed
+           - ✅ Handle offset commit failures gracefully
+           - ✅ Implement offset reset strategies for consumer group scenarios
+           - ✅ Monitor consumer lag and implement alerting
+
+        8. **Consumer Group Management:**
+           - ✅ Ensure consumers are part of a consumer group
+           - ✅ Handle rebalancing events properly
+           - ✅ Implement graceful shutdown procedures
+           - ✅ Monitor consumer group health and stability
+
+        **🛡️ Security & Best Practices:**
+        9. **Authentication & Authorization:**
+           - ✅ Use secure credential management (not hardcoded)
+
+        10. **Data Security:**
+            - ✅ Use encryption for sensitive data in transit
+            - ✅ Implement proper key management for encrypted topics
+            - ✅ Audit access patterns and implement monitoring
+            - ✅ Follow principle of least privilege for topic access
+
+        **📊 Error Handling & Resilience:**
+        11. **Error Classification & Handling:**
+            - ✅ Distinguish between transient and permanent errors
+            - ✅ Implement retry logic with exponential backoff for transient errors
+            - ✅ Handle permanent errors gracefully (log, alert, circuit break)
+            - ✅ Implement dead letter queues for failed messages
+            - ✅ Monitor error rates and implement alerting
+
+        12. **Circuit Breaker Patterns:**
+            - ✅ Implement circuit breakers for broker failures
+            - ✅ Monitor circuit breaker state and metrics
+            - ✅ Implement fallback mechanisms when possible
+
+        **📈 Observability & Monitoring:**
+        13. **Metrics & Monitoring:**
+            - ✅ Track producer/consumer throughput and latency
+            - ✅ Monitor consumer lag and offset commit success rates
+            - ✅ Track error rates and failure patterns
+            - ✅ Monitor connection pool utilization and health
+            - ✅ Implement health checks for Kafka clients
+
+        14. **Logging & Tracing:**
+            - ✅ Log important operations (produce/consume, errors, rebalances)
+            - ✅ Include correlation IDs for request tracing
+            - ✅ Log configuration changes and client lifecycle events
+            - ✅ Use structured logging with consistent field names
+
+        **🚨 Common Anti-Patterns to Flag:**
+        - ❌ Creating new Kafka clients per operation
+        - ❌ Missing error handling for network failures
+        - ❌ No retry logic for transient errors
+        - ❌ Missing timeout configurations
+        - ❌ Hardcoded broker addresses or credentials
+        - ❌ No monitoring or metrics implementation
+        - ❌ Missing consumer group configuration
+        - ❌ No offset commit error handling
+        - ❌ Disabled idempotence without justification
+        - ❌ No compression enabled for producers
+
+        **🔍 Review Focus Areas:**
+        - Verify client lifecycle management and reuse patterns
+        - Check producer/consumer configuration for optimal settings
+        - Ensure proper error handling and retry logic
+        - Validate security configurations and authentication
+        - Review offset management and consumer group handling
+        - Check for monitoring and observability implementation
+        - Identify opportunities for Prometheus metrics
+
+        **📊 Prometheus Metrics Opportunities:**
+        - 🔍 **Automatically suggest metrics when seeing:**
+          - Kafka producers → `kafka_producer_messages_total{topic, status}`
+          - Kafka consumers → `kafka_consumer_messages_total{topic, partition}`
+          - Message processing → `kafka_message_duration_seconds{topic, operation}`
+          - Error handling → `kafka_errors_total{type, topic, operation}`
+          - Consumer lag → `kafka_consumer_lag{topic, partition, group}`
+          - Connection health → `kafka_connection_status{broker, state}`
+          - Offset commits → `kafka_offset_commits_total{topic, group, status}`
+
+    - path: "**/*{kafka*,producer*,consumer*,broker*,topic*,stream*}*"
       instructions: |
-        **General ScyllaDB Best Practices (Applicable across languages):** ⚡️
-        This code appears to interact with a ScyllaDB database. Please ensure the following:
-        
-        1.  **Time-to-Live (TTL):** Use TTLs for data that expires automatically (e.g., sessions, caches) to avoid manual cleanup and tombstone accumulation.
-        2.  **Connection Pooling:** Rely on the official ScyllaDB client drivers for connection pooling and management.
-        3.  **Query Timeouts:** Configure a timeout for each query or operation to prevent it from hanging indefinitely.
-        4.  **Graceful Connection Closing:** Ensure the ScyllaDB cluster session is closed gracefully to release resources and connections.
-        5.  **Consistency Levels:** Explicitly set appropriate **consistency levels** (e.g., `QUORUM`, `LOCAL_QUORUM`, `ONE`) for reads and writes. Understand the trade-offs between consistency, availability, and latency.
-        6.  **Retries:** Use retries carefully. When there is a surge and the database is failing for a lot of requests, retries overburden the database even more. 
-        7.  **BYPASS CACHE for Range Queries:** For large range queries that are not latency-sensitive, consider using `BYPASS CACHE` to prevent evicting hot data from the row cache.
-        8.  **Prepared Statements:** Use **prepared statements** for frequently executed queries to reduce parsing overhead and prevent CQL injection.
+        **Comprehensive Kafka Code Review Checklist:**
+
+        **🔧 Client Lifecycle & Resource Management:**
+        1. **Singleton Client Pattern:**
+           - ✅ Reuse Kafka client instances (Producer, Consumer) throughout application lifecycle
+           - ✅ Avoid creating new clients per request/operation
+           - ✅ Use dependency injection or singleton patterns for client management
+           - ⚠️ Never create clients inside loops or per-message functions
+
+        2. **Connection Management:**
+           - ✅ Configure appropriate connection pool settings
+           - ✅ Set reasonable connection timeouts and retry policies
+           - ✅ Handle connection failures gracefully with exponential backoff
+           - ✅ Implement proper client cleanup and shutdown procedures
+
+        **📤 Producer Configuration & Best Practices:**
+        3. **Performance Tuning:**
+           - ✅ Configure `MaxBatchBytes` for optimal batch sizes (e.g., 16KB-1MB)
+           - ✅ Set `MaxBufferedRecords` to control memory usage
+           - ✅ Use `ProducerLinger` to balance latency vs throughput
+           - ✅ Configure `RecordRetries` for failed message handling (typically 3-5)
+           - ✅ Set `ProduceRequestTimeout` to prevent indefinite hangs
+
+        4. **Reliability & Consistency:**
+           - ✅ Enable idempotent producers (`enable.idempotence=true`) to prevent duplicates
+           - ✅ Configure `RequiredAcks` based on durability needs:
+             - `LeaderAck` for high throughput, lower durability
+             - `AllISRAcks` for highest durability, lower throughput
+           - ✅ Implement proper error handling for different failure scenarios
+
+        5. **Batching & Compression:**
+           - ✅ Enable compression (Gzip, Snappy, LZ4, Zstd) for network efficiency
+           - ✅ Tune `batch.size` and `linger.ms` for optimal compression ratios
+           - ✅ Ensure `max.request.size` accommodates your batch sizes
+
+        **📥 Consumer Configuration & Best Practices:**
+        6. **Performance & Efficiency:**
+           - ✅ Configure `FetchMinBytes` and `FetchMaxBytes` for optimal throughput
+           - ✅ Set `MaxConcurrentFetches` based on available resources
+           - ✅ Use appropriate `SessionTimeout` and `RebalanceTimeout` values
+           - ✅ Configure `HeartbeatInterval` for stable consumer group membership
+
+        7. **Offset Management:**
+           - ✅ Use `enable.auto.commit=false` for manual control when needed
+           - ✅ Handle offset commit failures gracefully
+           - ✅ Implement offset reset strategies for consumer group scenarios
+           - ✅ Monitor consumer lag and implement alerting
+
+        8. **Consumer Group Management:**
+           - ✅ Ensure consumers are part of a consumer group
+           - ✅ Handle rebalancing events properly
+           - ✅ Implement graceful shutdown procedures
+           - ✅ Monitor consumer group health and stability
+
+        **🛡️ Security & Best Practices:**
+        9. **Authentication & Authorization:**
+           - ✅ Use secure credential management (not hardcoded)
+
+        10. **Data Security:**
+            - ✅ Use encryption for sensitive data in transit
+            - ✅ Implement proper key management for encrypted topics
+            - ✅ Audit access patterns and implement monitoring
+            - ✅ Follow principle of least privilege for topic access
+
+        **📊 Error Handling & Resilience:**
+        11. **Error Classification & Handling:**
+            - ✅ Distinguish between transient and permanent errors
+            - ✅ Implement retry logic with exponential backoff for transient errors
+            - ✅ Handle permanent errors gracefully (log, alert, circuit break)
+            - ✅ Implement dead letter queues for failed messages
+            - ✅ Monitor error rates and implement alerting
+
+        12. **Circuit Breaker Patterns:**
+            - ✅ Implement circuit breakers for broker failures
+            - ✅ Monitor circuit breaker state and metrics
+            - ✅ Implement fallback mechanisms when possible
+
+        **📈 Observability & Monitoring:**
+        13. **Metrics & Monitoring:**
+            - ✅ Track producer/consumer throughput and latency
+            - ✅ Monitor consumer lag and offset commit success rates
+            - ✅ Track error rates and failure patterns
+            - ✅ Monitor connection pool utilization and health
+            - ✅ Implement health checks for Kafka clients
+
+        14. **Logging & Tracing:**
+            - ✅ Log important operations (produce/consume, errors, rebalances)
+            - ✅ Include correlation IDs for request tracing
+            - ✅ Log configuration changes and client lifecycle events
+            - ✅ Use structured logging with consistent field names
+
+        **🚨 Common Anti-Patterns to Flag:**
+        - ❌ Creating new Kafka clients per operation
+        - ❌ Missing error handling for network failures
+        - ❌ No retry logic for transient errors
+        - ❌ Missing timeout configurations
+        - ❌ Hardcoded broker addresses or credentials
+        - ❌ No monitoring or metrics implementation
+        - ❌ Missing consumer group configuration
+        - ❌ No offset commit error handling
+        - ❌ Disabled idempotence without justification
+        - ❌ No compression enabled for producers
+
+        **🔍 Review Focus Areas:**
+        - Verify client lifecycle management and reuse patterns
+        - Check producer/consumer configuration for optimal settings
+        - Ensure proper error handling and retry logic
+        - Validate security configurations and authentication
+        - Review offset management and consumer group handling
+        - Check for monitoring and observability implementation
+        - Identify opportunities for Prometheus metrics
+
+        **📊 Prometheus Metrics Opportunities:**
+        - 🔍 **Automatically suggest metrics when seeing:**
+          - Kafka producers → `kafka_producer_messages_total{topic, status}`
+          - Kafka consumers → `kafka_consumer_messages_total{topic, partition}`
+          - Message processing → `kafka_message_duration_seconds{topic, operation}`
+          - Error handling → `kafka_errors_total{type, topic, operation}`
+          - Consumer lag → `kafka_consumer_lag{topic, partition, group}`
+          - Connection health → `kafka_connection_status{broker, state}`
+          - Offset commits → `kafka_offset_commits_total{topic, group, status}`
+
+    - path: "**/{redis,df,dragonfly,cache,queue}*/**"
+      instructions: |
+        **Comprehensive Redis Code Review Checklist:**
+
+        **🔑 Key Management & Naming:**
+        1. **Key Naming Conventions:**
+           - ✅ Use clear, hierarchical key names (e.g., `user:123:profile`, `order:456:items`)
+           - ✅ Keep keys concise to save memory space
+           - ✅ Use consistent naming patterns across your application
+           - ✅ Avoid excessively long key names (>100 characters)
+           - ✅ Use colons (`:`) for hierarchical separation, not underscores or dashes
+
+        2. **Key Expiration & TTL:**
+           - ✅ Always set appropriate TTL for transient/cache data
+           - ✅ Use `EXPIRE` or `PEXPIRE` for automatic cleanup
+           - ⚠️ Never set TTL to 0 (indefinite) for cache data
+
+        **🚀 Performance & Scalability:**
+        3. **Avoiding Unbounded Operations:**
+           - ✅ **Never use without limits**: `HGETALL`, `LRANGE`, `SMEMBERS`, `ZRANGE`
+           - ✅ **Always check size first**: Use `HLEN`, `LLEN`, `SCARD`, `ZCARD`
+           - ✅ **Use iterative commands**: `HSCAN`, `SSCAN`, `ZSCAN`, `LSCAN`
+           - ✅ **Set reasonable limits**: `LRANGE key 0 99` instead of `LRANGE key 0 -1`
+           - ✅ **Implement pagination**: Use `SCAN` with cursor-based iteration
+
+        4. **Blocking Commands (Production Forbidden):**
+           - ❌ **Never use in production**: `KEYS`, `FLUSHALL`, `FLUSHDB`
+           - ✅ **Use alternatives**: `SCAN` for key discovery, selective deletion
+           - ✅ **Implement safely**: Use `DEL` with specific keys, not pattern deletion
+           - ✅ **Monitor usage**: Alert on any blocking command execution
+
+        5. **Pipelining & Batching:**
+           - ✅ Use pipelining for multiple related operations
+           - ✅ Batch commands to reduce network round-trips
+           - ✅ Use `MULTI`/`EXEC` for atomic operations when needed
+
+        **🔌 Connection & Resource Management:**
+        6. **Connection Pooling:**
+           - ✅ Configure appropriate pool size based on application load
+           - ✅ Set `PoolSize`, `MinIdleConns`, `MaxIdleConns`
+           - ✅ Configure `PoolTimeout` for connection acquisition
+           - ✅ Monitor pool utilization and connection health
+           - ✅ Implement connection health checks
+
+        7. **Timeout Configuration:**
+           - ✅ Set `ReadTimeout` for response reading operations
+           - ✅ Set `WriteTimeout` for request writing operations
+           - ✅ Set `DialTimeout` for connection establishment
+           - ✅ Use reasonable timeout values (typically 1-30 seconds)
+           - ⚠️ Never use infinite timeouts
+
+        8. **Resource Cleanup:**
+            - ✅ Properly close Redis connections
+            - ✅ Implement connection cleanup in application shutdown
+            - ✅ Handle connection failures gracefully
+            - ✅ Monitor for connection leaks
+
+        **📈 Error Handling & Resilience:**
+        9. **Error Handling Strategies:**
+            - ✅ Handle Redis connection failures gracefully
+            - ✅ Implement retry logic with exponential backoff
+            - ✅ Use circuit breaker patterns for Redis failures
+            - ✅ Implement fallback strategies when Redis is unavailable
+            - ✅ Log Redis errors with appropriate context
+
+        10. **Fallback Mechanisms:**
+            - ✅ Implement local caching when Redis is down
+            - ✅ Use database as fallback for critical data
+            - ✅ Graceful degradation of non-critical features
+            - ✅ Monitor fallback usage and Redis health
+
+        **💾 Data Management & Optimization:**
+        11. **Compression & Serialization:**
+            - ✅ Use compression for large values (gzip, zstd, lz4)
+            - ✅ Choose appropriate serialization format (JSON, MessagePack, Protocol Buffers)
+            - ✅ Monitor compression ratios and performance impact
+            - ✅ Balance compression vs CPU overhead
+
+        **📊 Observability & Monitoring:**
+        12. **Metrics & Monitoring:**
+            - ✅ Track Redis operation latency and throughput
+            - ✅ Monitor connection pool utilization
+            - ✅ Track error rates and failure patterns
+            - ✅ Monitor memory usage and key expiration
+            - ✅ Implement health checks for Redis availability
+
+        13. **Logging & Tracing:**
+            - ✅ Log Redis operations with appropriate detail
+            - ✅ Include correlation IDs for request tracing
+            - ✅ Log slow queries and performance issues
+            - ✅ Use structured logging with consistent field names
+
+
+        **🚨 Common Anti-Patterns to Flag:**
+        - ❌ Make sure that the redis client is not created for each request
+        - ❌ Using `KEYS` command in production code
+        - ❌ Unbounded `HGETALL`, `LRANGE`, `SMEMBERS` without size checks
+        - ❌ Missing TTL for cache data
+        - ❌ No connection pooling or timeout configuration
+        - ❌ Hardcoded Redis credentials or connection strings
+        - ❌ No error handling for Redis failures
+        - ❌ Missing fallback mechanisms for Redis unavailability
+        - ❌ No monitoring or health checks implemented
+        - ❌ Using `FLUSHALL`/`FLUSHDB` in application code
+        - ❌ No compression for large values
+
+        **🔍 Review Focus Areas:**
+        - Verify key naming conventions and TTL usage
+        - Check for unbounded operations and blocking commands
+        - Ensure proper connection pooling and timeout configuration
+        - Validate security settings and authentication
+        - Review error handling and fallback strategies
+        - Check for monitoring and observability implementation
+        - Identify opportunities for Prometheus metrics
+
+        **📊 Prometheus Metrics Opportunities:**
+        - 🔍 **Automatically suggest metrics when seeing:**
+          - Redis operations → `redis_operations_total{operation, status}`
+          - Operation latency → `redis_operation_duration_seconds{operation}`
+          - Connection usage → `redis_connections_active{state}`
+          - Memory usage → `redis_memory_bytes{type}`
+          - Key operations → `redis_keys_total{operation, data_type}`
+          - Error handling → `redis_errors_total{type, operation}`
+          - Cache hits/misses → `redis_cache_hits_total{key_pattern}`
+
+    - path: "**/*{redis*,df*,dragonfly*,cache*,queue*}*"
+      instructions: |
+        **Comprehensive Redis Code Review Checklist:**
+
+        **🔑 Key Management & Naming:**
+        1. **Key Naming Conventions:**
+           - ✅ Use clear, hierarchical key names (e.g., `user:123:profile`, `order:456:items`)
+           - ✅ Keep keys concise to save memory space
+           - ✅ Use consistent naming patterns across your application
+           - ✅ Avoid excessively long key names (>100 characters)
+           - ✅ Use colons (`:`) for hierarchical separation, not underscores or dashes
+
+        2. **Key Expiration & TTL:**
+           - ✅ Always set appropriate TTL for transient/cache data
+           - ✅ Use `EXPIRE` or `PEXPIRE` for automatic cleanup
+           - ⚠️ Never set TTL to 0 (indefinite) for cache data
+
+        **🚀 Performance & Scalability:**
+        3. **Avoiding Unbounded Operations:**
+           - ✅ **Never use without limits**: `HGETALL`, `LRANGE`, `SMEMBERS`, `ZRANGE`
+           - ✅ **Always check size first**: Use `HLEN`, `LLEN`, `SCARD`, `ZCARD`
+           - ✅ **Use iterative commands**: `HSCAN`, `SSCAN`, `ZSCAN`, `LSCAN`
+           - ✅ **Set reasonable limits**: `LRANGE key 0 99` instead of `LRANGE key 0 -1`
+           - ✅ **Implement pagination**: Use `SCAN` with cursor-based iteration
+
+        4. **Blocking Commands (Production Forbidden):**
+           - ❌ **Never use in production**: `KEYS`, `FLUSHALL`, `FLUSHDB`
+           - ✅ **Use alternatives**: `SCAN` for key discovery, selective deletion
+           - ✅ **Implement safely**: Use `DEL` with specific keys, not pattern deletion
+           - ✅ **Monitor usage**: Alert on any blocking command execution
+
+        5. **Pipelining & Batching:**
+           - ✅ Use pipelining for multiple related operations
+           - ✅ Batch commands to reduce network round-trips
+           - ✅ Use `MULTI`/`EXEC` for atomic operations when needed
+
+        **🔌 Connection & Resource Management:**
+        6. **Connection Pooling:**
+           - ✅ Configure appropriate pool size based on application load
+           - ✅ Set `PoolSize`, `MinIdleConns`, `MaxIdleConns`
+           - ✅ Configure `PoolTimeout` for connection acquisition
+           - ✅ Monitor pool utilization and connection health
+           - ✅ Implement connection health checks
+
+        7. **Timeout Configuration:**
+           - ✅ Set `ReadTimeout` for response reading operations
+           - ✅ Set `WriteTimeout` for request writing operations
+           - ✅ Set `DialTimeout` for connection establishment
+           - ✅ Use reasonable timeout values (typically 1-30 seconds)
+           - ⚠️ Never use infinite timeouts
+
+        8. **Resource Cleanup:**
+            - ✅ Properly close Redis connections
+            - ✅ Implement connection cleanup in application shutdown
+            - ✅ Handle connection failures gracefully
+            - ✅ Monitor for connection leaks
+
+        **📈 Error Handling & Resilience:**
+        9. **Error Handling Strategies:**
+            - ✅ Handle Redis connection failures gracefully
+            - ✅ Implement retry logic with exponential backoff
+            - ✅ Use circuit breaker patterns for Redis failures
+            - ✅ Implement fallback strategies when Redis is unavailable
+            - ✅ Log Redis errors with appropriate context
+
+        10. **Fallback Mechanisms:**
+            - ✅ Implement local caching when Redis is down
+            - ✅ Use database as fallback for critical data
+            - ✅ Graceful degradation of non-critical features
+            - ✅ Monitor fallback usage and Redis health
+
+        **💾 Data Management & Optimization:**
+        11. **Compression & Serialization:**
+            - ✅ Use compression for large values (gzip, zstd, lz4)
+            - ✅ Choose appropriate serialization format (JSON, MessagePack, Protocol Buffers)
+            - ✅ Monitor compression ratios and performance impact
+            - ✅ Balance compression vs CPU overhead
+
+        **📊 Observability & Monitoring:**
+        12. **Metrics & Monitoring:**
+            - ✅ Track Redis operation latency and throughput
+            - ✅ Monitor connection pool utilization
+            - ✅ Track error rates and failure patterns
+            - ✅ Monitor memory usage and key expiration
+            - ✅ Implement health checks for Redis availability
+
+        13. **Logging & Tracing:**
+            - ✅ Log Redis operations with appropriate detail
+            - ✅ Include correlation IDs for request tracing
+            - ✅ Log slow queries and performance issues
+            - ✅ Use structured logging with consistent field names
+
+
+        **🚨 Common Anti-Patterns to Flag:**
+        - ❌ Make sure that the redis client is not created for each request
+        - ❌ Using `KEYS` command in production code
+        - ❌ Unbounded `HGETALL`, `LRANGE`, `SMEMBERS` without size checks
+        - ❌ Missing TTL for cache data
+        - ❌ No connection pooling or timeout configuration
+        - ❌ Hardcoded Redis credentials or connection strings
+        - ❌ No error handling for Redis failures
+        - ❌ Missing fallback mechanisms for Redis unavailability
+        - ❌ No monitoring or health checks implemented
+        - ❌ Using `FLUSHALL`/`FLUSHDB` in application code
+        - ❌ No compression for large values
+
+        **🔍 Review Focus Areas:**
+        - Verify key naming conventions and TTL usage
+        - Check for unbounded operations and blocking commands
+        - Ensure proper connection pooling and timeout configuration
+        - Validate security settings and authentication
+        - Review error handling and fallback strategies
+        - Check for monitoring and observability implementation
+        - Identify opportunities for Prometheus metrics
+
+        **📊 Prometheus Metrics Opportunities:**
+        - 🔍 **Automatically suggest metrics when seeing:**
+          - Redis operations → `redis_operations_total{operation, status}`
+          - Operation latency → `redis_operation_duration_seconds{operation}`
+          - Connection usage → `redis_connections_active{state}`
+          - Memory usage → `redis_memory_bytes{type}`
+          - Key operations → `redis_keys_total{operation, data_type}`
+          - Error handling → `redis_errors_total{type, operation}`
+          - Cache hits/misses → `redis_cache_hits_total{key_pattern}`
 
     - path: "**/{scylladb,scylla}*/**"
       instructions: |
-        **General ScyllaDB Best Practices (Applicable across languages):** ⚡️
-        This code appears to interact with a ScyllaDB database. Please ensure the following:
-        
-        1.  **Time-to-Live (TTL):** Use TTLs for data that expires automatically (e.g., sessions, caches) to avoid manual cleanup and tombstone accumulation.
-        2.  **Connection Pooling:** Rely on the official ScyllaDB client drivers for connection pooling and management.
-        3.  **Query Timeouts:** Configure a timeout for each query or operation to prevent it from hanging indefinitely.
-        4.  **Graceful Connection Closing:** Ensure the ScyllaDB cluster session is closed gracefully to release resources and connections.
-        5.  **Consistency Levels:** Explicitly set appropriate **consistency levels** (e.g., `QUORUM`, `LOCAL_QUORUM`, `ONE`) for reads and writes. Understand the trade-offs between consistency, availability, and latency.
-        6.  **Retries:** Use retries carefully. When there is a surge and the database is failing for a lot of requests, retries overburden the database even more. 
-        7.  **BYPASS CACHE for Range Queries:** For large range queries that are not latency-sensitive, consider using `BYPASS CACHE` to prevent evicting hot data from the row cache.
-        8.  **Prepared Statements:** Use **prepared statements** for frequently executed queries to reduce parsing overhead and prevent CQL injection.
+        **Comprehensive ScyllaDB Code Review Checklist:**
+
+        **🔧 Client Lifecycle & Resource Management:**
+        1. **Connection Management:**
+           - ✅ Configure appropriate connection pool size and timeouts
+           - ✅ Implement graceful connection closing and cleanup
+           - ✅ Handle connection failures with exponential backoff
+           - ⚠️ Never create new client connections per request
+
+        2. **Session Management:**
+           - ✅ Reuse session instances throughout application lifecycle
+           - ✅ Configure session-level timeouts and retry policies
+           - ✅ Implement proper session cleanup in application shutdown
+           - ✅ Monitor session health and connection status
+
+        **📊 Query Performance & Optimization:**
+        3. **Prepared Statements:**
+           - ✅ Use prepared statements for frequently executed queries
+           - ✅ Cache prepared statements at application level
+           - ✅ Avoid dynamic query construction to prevent CQL injection
+           - ✅ Monitor prepared statement cache hit rates
+
+        4. **Query Timeouts:**
+           - ✅ Set explicit timeouts for all queries (typically 5-30 seconds)
+           - ✅ Configure different timeouts for reads vs writes
+           - ✅ Implement query cancellation for long-running operations
+           - ⚠️ Never use infinite timeouts - can cause resource exhaustion
+
+        5. **Consistency Levels:**
+           - ✅ Explicitly set appropriate consistency levels for all operations
+           - ✅ **Read Consistency**: `ONE` (fast), `LOCAL_QUORUM` (balanced), `QUORUM` (strong)
+           - ✅ **Write Consistency**: `ONE` (fast), `LOCAL_QUORUM` (balanced), `QUORUM` (strong)
+           - ✅ Understand trade-offs: higher consistency = lower availability + higher latency
+           - ✅ Document consistency level choices with business justification
+
+        **🚀 Performance & Scalability:**
+        6. **BYPASS CACHE Optimization:**
+           - ✅ Use `BYPASS CACHE` for large range queries that aren't latency-sensitive
+
+        7. **Batch Operations:**
+           - ✅ Use batch statements for multiple related operations
+           - ✅ Keep batch sizes reasonable (typically 10-100 operations)
+
+        **🛡️ Security & Best Practices:**
+        8. **Authentication & Authorization:**
+           - ✅ Use proper authentication (username/password, certificates)
+           - ✅ Use secure credential management (environment variables, not hardcoded)
+
+        9. **Query Security:**
+            - ✅ Use parameterized queries to prevent CQL injection
+
+        **📈 Error Handling & Resilience:**
+        10. **Retry Strategies:**
+            - ✅ Implement intelligent retry logic with exponential backoff
+            - ✅ Use jitter in retry delays to prevent thundering herd
+            - ⚠️ **Critical**: Avoid aggressive retries during database surges
+            - ✅ Monitor retry patterns and adjust strategies accordingly
+
+        11. **Error Classification:**
+            - ✅ Handle `UnavailableException` for temporary failures
+            - ✅ Handle `ReadTimeoutException` and `WriteTimeoutException`
+            - ✅ Handle `ConsistencyException` for consistency level violations
+            - ✅ Implement circuit breaker patterns for persistent failures
+
+
+        **📊 Observability & Monitoring:**
+        12. **Metrics & Monitoring:**
+            - ✅ Track query latency and throughput
+            - ✅ Monitor connection pool utilization
+
+        13. **Logging & Tracing:**
+            - ✅ Log slow queries and performance issues
+            - ✅ Include correlation IDs for request tracing
+            - ✅ Log consistency level violations and retries
+            - ✅ Use structured logging with consistent field names
+
+        **🚨 Common Anti-Patterns to Flag:**
+        - ❌ Creating new ScyllaDB clients per request
+        - ❌ Missing query timeouts or infinite timeouts
+        - ❌ No retry logic for transient failures
+        - ❌ Missing consistency level configuration
+        - ❌ Hardcoded credentials or connection strings
+        - ❌ No monitoring or metrics implementation
+        - ❌ No prepared statement usage for repeated queries
+        - ❌ Aggressive retries during database surges
+        - ❌ Missing error handling for different exception types
+
+        **🔍 Review Focus Areas:**
+        - Verify client lifecycle management and connection pooling
+        - Check query timeout configurations and consistency levels
+        - Ensure proper error handling and retry strategies
+        - Validate security configurations and authentication
+        - Check for monitoring and observability implementation
+        - Identify opportunities for Prometheus metrics
+
+        **📊 Prometheus Metrics Opportunities:**
+        - 🔍 **Automatically suggest metrics when seeing:**
+          - ScyllaDB queries → `scylla_queries_total{operation, consistency, status}`
+          - Query latency → `scylla_query_duration_seconds{operation, consistency}`
+          - Connection usage → `scylla_connections_active{state}`
+          - Consistency violations → `scylla_consistency_violations_total{operation}`
+          - Retry attempts → `scylla_retries_total{operation, reason}`
+          - Cache operations → `scylla_cache_operations_total{operation, status}`
+
+    - path: "**/*{scylladb*,scylla*}*"
+      instructions: |
+        **Comprehensive ScyllaDB Code Review Checklist:**
+
+        **🔧 Client Lifecycle & Resource Management:**
+        1. **Connection Management:**
+           - ✅ Configure appropriate connection pool size and timeouts
+           - ✅ Implement graceful connection closing and cleanup
+           - ✅ Handle connection failures with exponential backoff
+           - ⚠️ Never create new client connections per request
+
+        2. **Session Management:**
+           - ✅ Reuse session instances throughout application lifecycle
+           - ✅ Configure session-level timeouts and retry policies
+           - ✅ Implement proper session cleanup in application shutdown
+           - ✅ Monitor session health and connection status
+
+        **📊 Query Performance & Optimization:**
+        3. **Prepared Statements:**
+           - ✅ Use prepared statements for frequently executed queries
+           - ✅ Cache prepared statements at application level
+           - ✅ Avoid dynamic query construction to prevent CQL injection
+           - ✅ Monitor prepared statement cache hit rates
+
+        4. **Query Timeouts:**
+           - ✅ Set explicit timeouts for all queries (typically 5-30 seconds)
+           - ✅ Configure different timeouts for reads vs writes
+           - ✅ Implement query cancellation for long-running operations
+           - ⚠️ Never use infinite timeouts - can cause resource exhaustion
+
+        5. **Consistency Levels:**
+           - ✅ Explicitly set appropriate consistency levels for all operations
+           - ✅ **Read Consistency**: `ONE` (fast), `LOCAL_QUORUM` (balanced), `QUORUM` (strong)
+           - ✅ **Write Consistency**: `ONE` (fast), `LOCAL_QUORUM` (balanced), `QUORUM` (strong)
+           - ✅ Understand trade-offs: higher consistency = lower availability + higher latency
+           - ✅ Document consistency level choices with business justification
+
+        **🚀 Performance & Scalability:**
+        6. **BYPASS CACHE Optimization:**
+           - ✅ Use `BYPASS CACHE` for large range queries that aren't latency-sensitive
+
+        7. **Batch Operations:**
+           - ✅ Use batch statements for multiple related operations
+           - ✅ Keep batch sizes reasonable (typically 10-100 operations)
+
+        **🛡️ Security & Best Practices:**
+        8. **Authentication & Authorization:**
+           - ✅ Use proper authentication (username/password, certificates)
+           - ✅ Use secure credential management (environment variables, not hardcoded)
+
+        9. **Query Security:**
+            - ✅ Use parameterized queries to prevent CQL injection
+
+        **📈 Error Handling & Resilience:**
+        10. **Retry Strategies:**
+            - ✅ Implement intelligent retry logic with exponential backoff
+            - ✅ Use jitter in retry delays to prevent thundering herd
+            - ⚠️ **Critical**: Avoid aggressive retries during database surges
+            - ✅ Monitor retry patterns and adjust strategies accordingly
+
+        11. **Error Classification:**
+            - ✅ Handle `UnavailableException` for temporary failures
+            - ✅ Handle `ReadTimeoutException` and `WriteTimeoutException`
+            - ✅ Handle `ConsistencyException` for consistency level violations
+            - ✅ Implement circuit breaker patterns for persistent failures
+
+
+        **📊 Observability & Monitoring:**
+        12. **Metrics & Monitoring:**
+            - ✅ Track query latency and throughput
+            - ✅ Monitor connection pool utilization
+
+        13. **Logging & Tracing:**
+            - ✅ Log slow queries and performance issues
+            - ✅ Include correlation IDs for request tracing
+            - ✅ Log consistency level violations and retries
+            - ✅ Use structured logging with consistent field names
+
+        **🚨 Common Anti-Patterns to Flag:**
+        - ❌ Creating new ScyllaDB clients per request
+        - ❌ Missing query timeouts or infinite timeouts
+        - ❌ No retry logic for transient failures
+        - ❌ Missing consistency level configuration
+        - ❌ Hardcoded credentials or connection strings
+        - ❌ No monitoring or metrics implementation
+        - ❌ No prepared statement usage for repeated queries
+        - ❌ Aggressive retries during database surges
+        - ❌ Missing error handling for different exception types
+
+        **🔍 Review Focus Areas:**
+        - Verify client lifecycle management and connection pooling
+        - Check query timeout configurations and consistency levels
+        - Ensure proper error handling and retry strategies
+        - Validate security configurations and authentication
+        - Check for monitoring and observability implementation
+        - Identify opportunities for Prometheus metrics
+
+        **📊 Prometheus Metrics Opportunities:**
+        - 🔍 **Automatically suggest metrics when seeing:**
+          - ScyllaDB queries → `scylla_queries_total{operation, consistency, status}`
+          - Query latency → `scylla_query_duration_seconds{operation, consistency}`
+          - Connection usage → `scylla_connections_active{state}`
+          - Consistency violations → `scylla_consistency_violations_total{operation}`
+          - Retry attempts → `scylla_retries_total{operation, reason}`
+          - Cache operations → `scylla_cache_operations_total{operation, status}`
+
+    - path: "**/{spanner}*/**"
+      instructions: |
+        **Comprehensive Google Spanner Code Review Checklist:**
+
+        **🔧 Client Lifecycle & Resource Management:**
+        1. **Connection Management:**
+           - ✅ Configure appropriate connection pool size and timeouts
+           - ✅ Implement graceful client cleanup and shutdown
+           - ✅ Handle connection failures with exponential backoff
+           - ⚠️ Never create new Spanner clients per request
+
+        2. **Session Management:**
+           - ✅ Reuse session instances throughout application lifecycle
+           - ✅ Configure session-level timeouts and retry policies
+           - ✅ Implement proper session cleanup in application shutdown
+
+        **📊 Transaction Management:**
+        3. **Transaction Types & Usage:**
+           - ✅ Use `ReadOnlyTransaction` for read-only operations
+           - ✅ Use `ReadWriteTransaction` for data modifications
+
+        4. **Transaction Best Practices:**
+           - ✅ **Error Handling**: Implement proper rollback and retry logic
+           - ✅ **Monitoring**: Track transaction duration and failure rates
+
+        **🚀 Performance & Query Optimization:**
+        5. **Query Timeouts:**
+           - ✅ Set explicit timeouts for all Spanner queries (typically 5-60 seconds). This is during client initialization
+           - ✅ Configure different timeouts for reads vs writes
+           - ✅ Implement query cancellation for long-running operations
+           - ✅ Use `StatementTimeout` for individual query timeouts
+           - ⚠️ Never use infinite timeouts - can cause resource exhaustion
+
+
+        6. **Query Priority Management:**
+           - ✅ Set appropriate query priorities: `HIGH`, `MEDIUM`, or `LOW`
+           - ✅ **HIGH Priority**: Critical user-facing queries, real-time operations
+           - ✅ **MEDIUM Priority**: Standard business operations, batch processing
+           - ✅ **LOW Priority**: Background jobs, analytics, non-critical operations
+           - ✅ Balance priority levels to manage resource contention effectively
+
+        7. **FORCE_INDEX Usage:**
+           - ✅ Use `FORCE_INDEX` when you need Spanner to use a specific index
+           - ✅ **Use Cases**: Query optimization, performance testing, index validation
+           - ✅ **Caution**: Only use when you're confident about index choice
+           - ✅ **Monitoring**: Track query performance with forced vs automatic index selection
+           - ✅ **Documentation**: Document why specific indexes are forced
+
+        8. **Query Security:**
+            - ✅ Use parameterized queries to prevent SQL injection
+            - ✅ Use prepared statements for repeated queries
+
+        **📈 Error Handling & Resilience:**
+        9. **Error Classification & Handling:**
+            - ✅ Handle `AbortedException` for transaction conflicts
+            - ✅ Handle `DeadlineExceededException` for timeout scenarios
+            - ✅ Handle `ResourceExhaustedException` for quota limits
+            - ✅ Handle `FailedPreconditionException` for invalid operations
+
+        10. **Retry Strategies:**
+            - ✅ Implement intelligent retry logic with exponential backoff
+            - ✅ Use jitter in retry delays to prevent thundering herd
+            - ✅ Distinguish between retryable and non-retryable errors
+            - ✅ Implement backoff strategies for different error types
+            - ✅ Monitor retry patterns and adjust strategies accordingly
+
+        **📊 Observability & Monitoring:**
+        11. **Metrics & Monitoring:**
+            - ✅ Track query latency and throughput
+            - ✅ Monitor transaction success rates and durations
+            - ✅ Monitor connection pool utilization
+
+
+        **🚨 Common Anti-Patterns to Flag:**
+        - ❌ Creating new Spanner clients per request
+        - ❌ Missing query timeouts or infinite timeouts
+        - ❌ Long-running transactions (>10 seconds)
+        - ❌ No retry logic for transient failures
+        - ❌ Missing query priority configuration
+        - ❌ Hardcoded credentials or connection strings
+        - ❌ No monitoring or metrics implementation
+        - ❌ Missing error handling for different exception types
+        - ❌ No transaction conflict resolution
+        - ❌ **SELECT ***: Always specify required columns explicitly
+
+        **🔍 Review Focus Areas:**
+        - Verify client lifecycle management and connection pooling
+        - Check transaction design and duration optimization
+        - Ensure proper error handling and retry strategies
+        - Validate security configurations and authentication
+        - Identify opportunities for Prometheus metrics
+
+        **📊 Prometheus Metrics Opportunities:**
+        - 🔍 **Automatically suggest metrics when seeing:**
+          - Spanner queries → `spanner_queries_total{operation, priority, status}`
+          - Query latency → `spanner_query_duration_seconds{operation, priority}`
+          - Transaction metrics → `spanner_transactions_total{type, status}`
+          - Connection usage → `spanner_connections_active{state}`
+          - Index operations → `spanner_index_operations_total{operation, index_name}`
+          - Error handling → `spanner_errors_total{type, operation}`
+          - Retry attempts → `spanner_retries_total{operation, reason}`
+
+    - path: "**/*{spanner*}*"
+      instructions: |
+        **Comprehensive Google Spanner Code Review Checklist:**
+
+        **🔧 Client Lifecycle & Resource Management:**
+        1. **Connection Management:**
+           - ✅ Configure appropriate connection pool size and timeouts
+           - ✅ Implement graceful client cleanup and shutdown
+           - ✅ Handle connection failures with exponential backoff
+           - ⚠️ Never create new Spanner clients per request
+
+        2. **Session Management:**
+           - ✅ Reuse session instances throughout application lifecycle
+           - ✅ Configure session-level timeouts and retry policies
+           - ✅ Implement proper session cleanup in application shutdown
+
+        **📊 Transaction Management:**
+        3. **Transaction Types & Usage:**
+           - ✅ Use `ReadOnlyTransaction` for read-only operations
+           - ✅ Use `ReadWriteTransaction` for data modifications
+
+        4. **Transaction Best Practices:**
+           - ✅ **Error Handling**: Implement proper rollback and retry logic
+           - ✅ **Monitoring**: Track transaction duration and failure rates
+
+        **🚀 Performance & Query Optimization:**
+        5. **Query Timeouts:**
+           - ✅ Set explicit timeouts for all Spanner queries (typically 5-60 seconds). This is during client initialization
+           - ✅ Configure different timeouts for reads vs writes
+           - ✅ Implement query cancellation for long-running operations
+           - ✅ Use `StatementTimeout` for individual query timeouts
+           - ⚠️ Never use infinite timeouts - can cause resource exhaustion
+
+
+        6. **Query Priority Management:**
+           - ✅ Set appropriate query priorities: `HIGH`, `MEDIUM`, or `LOW`
+           - ✅ **HIGH Priority**: Critical user-facing queries, real-time operations
+           - ✅ **MEDIUM Priority**: Standard business operations, batch processing
+           - ✅ **LOW Priority**: Background jobs, analytics, non-critical operations
+           - ✅ Balance priority levels to manage resource contention effectively
+
+        7. **FORCE_INDEX Usage:**
+           - ✅ Use `FORCE_INDEX` when you need Spanner to use a specific index
+           - ✅ **Use Cases**: Query optimization, performance testing, index validation
+           - ✅ **Caution**: Only use when you're confident about index choice
+           - ✅ **Monitoring**: Track query performance with forced vs automatic index selection
+           - ✅ **Documentation**: Document why specific indexes are forced
+
+        8. **Query Security:**
+            - ✅ Use parameterized queries to prevent SQL injection
+            - ✅ Use prepared statements for repeated queries
+
+        **📈 Error Handling & Resilience:**
+        9. **Error Classification & Handling:**
+            - ✅ Handle `AbortedException` for transaction conflicts
+            - ✅ Handle `DeadlineExceededException` for timeout scenarios
+            - ✅ Handle `ResourceExhaustedException` for quota limits
+            - ✅ Handle `FailedPreconditionException` for invalid operations
+
+        10. **Retry Strategies:**
+            - ✅ Implement intelligent retry logic with exponential backoff
+            - ✅ Use jitter in retry delays to prevent thundering herd
+            - ✅ Distinguish between retryable and non-retryable errors
+            - ✅ Implement backoff strategies for different error types
+            - ✅ Monitor retry patterns and adjust strategies accordingly
+
+        **📊 Observability & Monitoring:**
+        11. **Metrics & Monitoring:**
+            - ✅ Track query latency and throughput
+            - ✅ Monitor transaction success rates and durations
+            - ✅ Monitor connection pool utilization
+
+
+        **🚨 Common Anti-Patterns to Flag:**
+        - ❌ Creating new Spanner clients per request
+        - ❌ Missing query timeouts or infinite timeouts
+        - ❌ Long-running transactions (>10 seconds)
+        - ❌ No retry logic for transient failures
+        - ❌ Missing query priority configuration
+        - ❌ Hardcoded credentials or connection strings
+        - ❌ No monitoring or metrics implementation
+        - ❌ Missing error handling for different exception types
+        - ❌ No transaction conflict resolution
+        - ❌ **SELECT ***: Always specify required columns explicitly
+
+        **🔍 Review Focus Areas:**
+        - Verify client lifecycle management and connection pooling
+        - Check transaction design and duration optimization
+        - Ensure proper error handling and retry strategies
+        - Validate security configurations and authentication
+        - Identify opportunities for Prometheus metrics
+
+        **📊 Prometheus Metrics Opportunities:**
+        - 🔍 **Automatically suggest metrics when seeing:**
+          - Spanner queries → `spanner_queries_total{operation, priority, status}`
+          - Query latency → `spanner_query_duration_seconds{operation, priority}`
+          - Transaction metrics → `spanner_transactions_total{type, status}`
+          - Connection usage → `spanner_connections_active{state}`
+          - Index operations → `spanner_index_operations_total{operation, index_name}`
+          - Error handling → `spanner_errors_total{type, operation}`
+          - Retry attempts → `spanner_retries_total{operation, reason}`
+
+    - path: "**/{postgres,cloudsql,db,database,sql,psql}*/**"
+      instructions: |
+        **Comprehensive PostgreSQL/CloudSQL Code Review Checklist:**
+
+        **🛡️ Security & Injection Prevention:**
+        1. **SQL Injection Prevention:**
+           - ✅ **Always use parameterized queries** to prevent SQL injection
+           - ✅ Use prepared statements for repeated queries
+           - ✅ Never concatenate user input directly into SQL strings
+           - ✅ Use ORM query builders when possible for additional safety
+           - ⚠️ **Critical**: Flag any string concatenation in SQL queries
+
+        **🚀 Performance & Query Optimization:**
+        2. **Query Performance Analysis:**
+           - ✅ **N+1 Query Detection**: Look for loops that execute database queries
+           - ✅ **Batching**: Use `IN` clauses or batch operations instead of individual queries
+
+        3. **Performance Anti-Patterns:**
+           - ❌ **FULL SCAN**: Avoid table scans on large tables
+           - ❌ **CARTESIAN JOIN**: Never use cross joins without explicit WHERE conditions
+           - ❌ **SELECT ***: Always specify required columns explicitly
+           - ❌ **Subqueries in SELECT**: Use JOINs when possible
+           - ❌ **Functions on indexed columns**: Avoid applying functions to indexed columns
+
+
+        **🔌 Connection & Resource Management:**
+        4. **Connection Management:**
+           - ✅ Use connection pooling (PgBouncer, application-level pools)
+           - ✅ Configure appropriate pool size based on application load
+           - ✅ Set connection timeouts and idle connection limits
+           - ✅ Implement proper connection cleanup and error handling
+           - ✅ Monitor connection pool utilization and health
+
+        5. **Resource Cleanup:**
+           - ✅ Always close database connections after use
+           - ✅ Use try-with-resources or defer statements for cleanup
+           - ✅ Implement proper error handling with connection cleanup
+           - ✅ Monitor for connection leaks and resource exhaustion
+           - ✅ Handle connection failures gracefully with retry logic
+
+        **📊 Transaction Management:**
+        6. **Transaction Best Practices:**
+           - ✅ **Explicit Transactions**: Use `BEGIN`, `COMMIT`, and `ROLLBACK` explicitly
+           - ✅ **Short Transactions**: Keep transactions as short as possible
+           - ✅ **Error Handling**: Implement proper rollback on errors
+           - ✅ **Isolation Levels**: Understand and use appropriate isolation levels
+           - ✅ **Deadlock Prevention**: Order operations consistently to avoid deadlocks
+           - ✅ **Monitoring**: Track transaction duration and failure rates
+
+        7. **Transaction Patterns:**
+           - ✅ **Read-Only Transactions**: Use for consistent reads across multiple queries
+           - ✅ **Write Transactions**: Group related modifications in single transactions
+           - ✅ **Nested Transactions**: Use savepoints for complex transaction logic
+           - ✅ **Distributed Transactions**: Consider 2PC for multi-database operations
+
+
+        **📈 Error Handling & Resilience:**
+        8. **Error Handling Strategies:**
+            - ✅ **Connection Errors**: Handle connection failures with retry logic
+            - ✅ **Query Errors**: Handle syntax and constraint violation errors
+            - ✅ **Transaction Errors**: Implement proper rollback and retry logic
+            - ✅ **Deadlock Handling**: Implement exponential backoff for deadlock retries
+            - ✅ **Logging**: Log all database errors with context and stack traces
+
+        9. **Retry Logic:**
+            - ✅ Implement exponential backoff with jitter for transient errors
+            - ✅ Set maximum retry attempts to prevent infinite loops
+            - ✅ Use circuit breaker patterns for persistent failures
+            - ✅ Monitor retry patterns and adjust strategies accordingly
+
+        **🔍 Query Clarity & Maintainability:**
+        10. **Query Readability:**
+            - ✅ **Aliases**: Use meaningful table and column aliases
+            - ✅ **Formatting**: Format SQL queries for readability
+            - ✅ **Comments**: Add comments for complex queries
+            - ✅ **Consistency**: Use consistent naming conventions
+            - ✅ **Modularity**: Break complex queries into smaller, readable parts
+
+        11. **Query Optimization:**
+            - ✅ **LIMIT**: Always use LIMIT for potentially large result sets
+            - ✅ **OFFSET**: Use cursor-based pagination instead of OFFSET for large datasets
+            - ✅ **Window Functions**: Use window functions for ranking and aggregation
+            - ✅ **CTEs**: Use Common Table Expressions for complex queries
+            - ✅ **Materialized Views**: Consider materialized views for expensive aggregations
+
+
+        **📊 Observability & Monitoring:**
+        12. **Metrics & Monitoring:**
+            - ✅ Track query latency and throughput
+            - ✅ Monitor connection pool utilization
+            - ✅ Track slow query patterns and execution plans
+            - ✅ Monitor index usage and performance impact
+            - ✅ Track transaction success rates and durations
+            - ✅ Implement health checks for database availability
+
+        13. **Logging & Tracing:**
+            - ✅ Log slow queries and performance issues
+            - ✅ Include correlation IDs for request tracing
+            - ✅ Log transaction conflicts and retry attempts
+            - ✅ Use structured logging with consistent field names
+            - ✅ Log query execution plans for optimization
+
+        **🚨 Common Anti-Patterns to Flag:**
+        - ❌ String concatenation in SQL queries (SQL injection risk)
+        - ❌ Missing parameterized queries or prepared statements
+        - ❌ N+1 query patterns in loops
+        - ❌ Missing indexes on frequently queried columns
+        - ❌ Using `SELECT *` instead of specific columns
+        - ❌ Missing transaction boundaries for related operations
+        - ❌ No connection pooling or timeout configuration
+        - ❌ Hardcoded database credentials
+        - ❌ No error handling for database failures
+        - ❌ Missing LIMIT clauses on potentially large result sets
+
+        **🔍 Review Focus Areas:**
+        - Verify SQL injection prevention and parameterized queries
+        - Check for N+1 query patterns and performance issues
+        - Ensure proper connection management and pooling
+        - Validate transaction design and error handling
+        - Review index usage and query optimization
+        - Check for monitoring and observability implementation
+        - Identify opportunities for Prometheus metrics
+
+        **📊 Prometheus Metrics Opportunities:**
+        - 🔍 **Automatically suggest metrics when seeing:**
+          - Database queries → `postgres_queries_total{operation, table, status}`
+          - Query latency → `postgres_query_duration_seconds{operation, table}`
+          - Connection usage → `postgres_connections_active{state}`
+          - Transaction metrics → `postgres_transactions_total{type, status}`
+          - Index operations → `postgres_index_operations_total{operation, index_name}`
+          - Error handling → `postgres_errors_total{type, operation}`
+          - Connection pool → `postgres_connection_pool_size{state}`
+
+    - path: "**/*{postgres*,cloudsql*,db*,database*,sql*,psql*}*"
+      instructions: |
+        **Comprehensive PostgreSQL/CloudSQL Code Review Checklist:**
+
+        **🛡️ Security & Injection Prevention:**
+        1. **SQL Injection Prevention:**
+           - ✅ **Always use parameterized queries** to prevent SQL injection
+           - ✅ Use prepared statements for repeated queries
+           - ✅ Never concatenate user input directly into SQL strings
+           - ✅ Use ORM query builders when possible for additional safety
+           - ⚠️ **Critical**: Flag any string concatenation in SQL queries
+
+        **🚀 Performance & Query Optimization:**
+        2. **Query Performance Analysis:**
+           - ✅ **N+1 Query Detection**: Look for loops that execute database queries
+           - ✅ **Batching**: Use `IN` clauses or batch operations instead of individual queries
+
+        3. **Performance Anti-Patterns:**
+           - ❌ **FULL SCAN**: Avoid table scans on large tables
+           - ❌ **CARTESIAN JOIN**: Never use cross joins without explicit WHERE conditions
+           - ❌ **SELECT ***: Always specify required columns explicitly
+           - ❌ **Subqueries in SELECT**: Use JOINs when possible
+           - ❌ **Functions on indexed columns**: Avoid applying functions to indexed columns
+
+
+        **🔌 Connection & Resource Management:**
+        4. **Connection Management:**
+           - ✅ Use connection pooling (PgBouncer, application-level pools)
+           - ✅ Configure appropriate pool size based on application load
+           - ✅ Set connection timeouts and idle connection limits
+           - ✅ Implement proper connection cleanup and error handling
+           - ✅ Monitor connection pool utilization and health
+
+        5. **Resource Cleanup:**
+           - ✅ Always close database connections after use
+           - ✅ Use try-with-resources or defer statements for cleanup
+           - ✅ Implement proper error handling with connection cleanup
+           - ✅ Monitor for connection leaks and resource exhaustion
+           - ✅ Handle connection failures gracefully with retry logic
+
+        **📊 Transaction Management:**
+        6. **Transaction Best Practices:**
+           - ✅ **Explicit Transactions**: Use `BEGIN`, `COMMIT`, and `ROLLBACK` explicitly
+           - ✅ **Short Transactions**: Keep transactions as short as possible
+           - ✅ **Error Handling**: Implement proper rollback on errors
+           - ✅ **Isolation Levels**: Understand and use appropriate isolation levels
+           - ✅ **Deadlock Prevention**: Order operations consistently to avoid deadlocks
+           - ✅ **Monitoring**: Track transaction duration and failure rates
+
+        7. **Transaction Patterns:**
+           - ✅ **Read-Only Transactions**: Use for consistent reads across multiple queries
+           - ✅ **Write Transactions**: Group related modifications in single transactions
+           - ✅ **Nested Transactions**: Use savepoints for complex transaction logic
+           - ✅ **Distributed Transactions**: Consider 2PC for multi-database operations
+
+
+        **📈 Error Handling & Resilience:**
+        8. **Error Handling Strategies:**
+            - ✅ **Connection Errors**: Handle connection failures with retry logic
+            - ✅ **Query Errors**: Handle syntax and constraint violation errors
+            - ✅ **Transaction Errors**: Implement proper rollback and retry logic
+            - ✅ **Deadlock Handling**: Implement exponential backoff for deadlock retries
+            - ✅ **Logging**: Log all database errors with context and stack traces
+
+        9. **Retry Logic:**
+            - ✅ Implement exponential backoff with jitter for transient errors
+            - ✅ Set maximum retry attempts to prevent infinite loops
+            - ✅ Use circuit breaker patterns for persistent failures
+            - ✅ Monitor retry patterns and adjust strategies accordingly
+
+        **🔍 Query Clarity & Maintainability:**
+        10. **Query Readability:**
+            - ✅ **Aliases**: Use meaningful table and column aliases
+            - ✅ **Formatting**: Format SQL queries for readability
+            - ✅ **Comments**: Add comments for complex queries
+            - ✅ **Consistency**: Use consistent naming conventions
+            - ✅ **Modularity**: Break complex queries into smaller, readable parts
+
+        11. **Query Optimization:**
+            - ✅ **LIMIT**: Always use LIMIT for potentially large result sets
+            - ✅ **OFFSET**: Use cursor-based pagination instead of OFFSET for large datasets
+            - ✅ **Window Functions**: Use window functions for ranking and aggregation
+            - ✅ **CTEs**: Use Common Table Expressions for complex queries
+            - ✅ **Materialized Views**: Consider materialized views for expensive aggregations
+
+
+        **📊 Observability & Monitoring:**
+        12. **Metrics & Monitoring:**
+            - ✅ Track query latency and throughput
+            - ✅ Monitor connection pool utilization
+            - ✅ Track slow query patterns and execution plans
+            - ✅ Monitor index usage and performance impact
+            - ✅ Track transaction success rates and durations
+            - ✅ Implement health checks for database availability
+
+        13. **Logging & Tracing:**
+            - ✅ Log slow queries and performance issues
+            - ✅ Include correlation IDs for request tracing
+            - ✅ Log transaction conflicts and retry attempts
+            - ✅ Use structured logging with consistent field names
+            - ✅ Log query execution plans for optimization
+
+        **🚨 Common Anti-Patterns to Flag:**
+        - ❌ String concatenation in SQL queries (SQL injection risk)
+        - ❌ Missing parameterized queries or prepared statements
+        - ❌ N+1 query patterns in loops
+        - ❌ Missing indexes on frequently queried columns
+        - ❌ Using `SELECT *` instead of specific columns
+        - ❌ Missing transaction boundaries for related operations
+        - ❌ No connection pooling or timeout configuration
+        - ❌ Hardcoded database credentials
+        - ❌ No error handling for database failures
+        - ❌ Missing LIMIT clauses on potentially large result sets
+
+        **🔍 Review Focus Areas:**
+        - Verify SQL injection prevention and parameterized queries
+        - Check for N+1 query patterns and performance issues
+        - Ensure proper connection management and pooling
+        - Validate transaction design and error handling
+        - Review index usage and query optimization
+        - Check for monitoring and observability implementation
+        - Identify opportunities for Prometheus metrics
+
+        **📊 Prometheus Metrics Opportunities:**
+        - 🔍 **Automatically suggest metrics when seeing:**
+          - Database queries → `postgres_queries_total{operation, table, status}`
+          - Query latency → `postgres_query_duration_seconds{operation, table}`
+          - Connection usage → `postgres_connections_active{state}`
+          - Transaction metrics → `postgres_transactions_total{type, status}`
+          - Index operations → `postgres_index_operations_total{operation, index_name}`
+          - Error handling → `postgres_errors_total{type, operation}`
+          - Connection pool → `postgres_connection_pool_size{state}`
+
+    - path: "**/{temporal,worker,workflow,task,activit}*/**"
+      instructions: |
+        **Comprehensive Temporal Code Review Checklist:**
+
+        **🔒 Workflow Determinism (Critical):**
+        1. **Deterministic Operations:**
+           - ✅ **No System Time**: Never use `System.currentTimeMillis()`, `new Date()`, or similar
+           - ✅ **No Random Numbers**: Never use `Math.random()`, `Random.nextInt()`, or similar
+           - ✅ **No UUID Generation**: Never use `UUID.randomUUID()` or similar
+           - ✅ **Use Temporal APIs**: Use `workflow.now()`, `workflow.randomUUID()`, `workflow.sideEffect()`
+           - ⚠️ **Critical**: Any non-deterministic operation will cause workflow replay failures
+
+        2. **Side Effect Isolation:**
+           - ✅ **No Direct I/O**: Never make database calls, network requests, or file system access
+           - ✅ **No External Services**: Never call external APIs or services directly
+           - ✅ **Delegate to Activities**: All side effects must be in Activities, not Workflows
+           - ✅ **Pure Functions**: Workflows should be pure, deterministic functions
+
+        3. **State Management:**
+           - ✅ **No Global State**: Never use static variables or global mutable state
+           - ✅ **No Concurrent Access**: Avoid concurrent data structures unless managed by Temporal
+           - ✅ **Immutable Data**: Use immutable data structures when possible
+           - ✅ **Workflow State**: Store state in workflow variables, not external storage
+
+        **📋 Activity Design & Implementation:**
+        4. **Activity Idempotency:**
+           - ✅ **Always Idempotent**: Design activities to be safely retryable
+           - ✅ **Idempotency Keys**: Use unique keys for operations with side effects
+           - ✅ **State Checks**: Check current state before performing operations
+           - ✅ **Compensation Logic**: Implement rollback mechanisms for failed operations
+           - ✅ **No Side Effects**: Activities should be safe to execute multiple times
+
+        5. **Activity Error Handling:**
+           - ✅ **Retry Policies**: Configure appropriate retry policies for different error types
+           - ✅ **Error Classification**: Distinguish between retryable and non-retryable errors
+           - ✅ **Timeout Configuration**: Set appropriate `StartToCloseTimeout` values
+           - ✅ **Heartbeating**: Implement heartbeating for long-running activities
+           - ✅ **Circuit Breakers**: Use circuit breakers for external service calls
+
+        6. **Activity Timeouts:**
+           - ✅ **StartToCloseTimeout**: Maximum time for activity execution
+           - ✅ **ScheduleToStartTimeout**: Maximum time to wait for worker assignment
+           - ✅ **HeartbeatTimeout**: Maximum time between heartbeats
+           - ✅ **ScheduleToCloseTimeout**: Maximum time from scheduling to completion
+           - ✅ **Retry Policies**: Configure retry delays and maximum attempts
+
+        **⚙️ Worker Configuration & Management:**
+        7. **Worker Concurrency:**
+           - ✅ **Activity Concurrency**: Set `MaxConcurrentActivityExecutionSize` appropriately
+           - ✅ **Workflow Concurrency**: Set `MaxConcurrentWorkflowTaskExecutionSize`
+           - ✅ **Task Polling**: Configure `MaxConcurrentActivityTaskPollers`
+           - ✅ **Workflow Polling**: Configure `MaxConcurrentWorkflowTaskPollers`
+           - ✅ **Resource Limits**: Balance concurrency with available system resources
+
+        8. **Worker Lifecycle:**
+           - ✅ **Graceful Shutdown**: Implement proper shutdown procedures
+           - ✅ **Health Checks**: Monitor worker health and availability
+           - ✅ **Connection Management**: Handle Temporal service connection failures
+           - ✅ **Task Processing**: Ensure tasks are processed efficiently
+           - ✅ **Error Recovery**: Implement worker-level error recovery mechanisms
+
+        **🔄 Workflow Orchestration:**
+        9. **Workflow Structure:**
+           - ✅ **Single Responsibility**: Each workflow should have one clear purpose
+           - ✅ **Granular Activities**: Break complex operations into smaller activities
+           - ✅ **Error Propagation**: Properly handle and propagate errors from activities
+           - ✅ **Compensation Logic**: Implement rollback for failed workflow steps
+           - ✅ **State Management**: Use workflow variables for state, not external storage
+
+
+        **📊 Error Handling & Resilience:**
+        10. **Workflow Error Handling:**
+            - ✅ **Try-Catch Blocks**: Wrap activity calls in proper error handling
+            - ✅ **Retry Logic**: Implement workflow-level retry mechanisms
+            - ✅ **Compensation**: Rollback completed steps on failures
+            - ✅ **Error Propagation**: Return meaningful error information
+            - ✅ **Logging**: Log errors with appropriate context and correlation IDs
+
+        11. **Retry Strategies:**
+            - ✅ **Exponential Backoff**: Use increasing delays between retries
+            - ✅ **Jitter**: Add randomness to retry delays to prevent thundering herd
+            - ✅ **Maximum Attempts**: Set reasonable limits on retry attempts
+            - ✅ **Error Classification**: Different retry strategies for different error types
+            - ✅ **Monitoring**: Track retry patterns and success rates
+
+
+
+        **📈 Observability & Monitoring:**
+        12. **Metrics & Monitoring:**
+            - ✅ **Workflow Metrics**: Track workflow execution times and success rates
+            - ✅ **Activity Metrics**: Monitor activity performance and error rates
+            - ✅ **Worker Metrics**: Track worker health and task processing rates
+            - ✅ **Retry Metrics**: Monitor retry patterns and success rates
+            - ✅ **Resource Usage**: Monitor memory, CPU, and connection usage
+
+        13. **Logging & Tracing:**
+            - ✅ **Structured Logging**: Use consistent log formats and field names
+            - ✅ **Correlation IDs**: Include workflow and activity IDs in all logs
+            - ✅ **Context Information**: Log relevant workflow state and parameters
+            - ✅ **Error Details**: Include full error context and stack traces
+            - ✅ **Performance Logging**: Log slow operations and bottlenecks
+
+        **🚨 Common Anti-Patterns to Flag:**
+        - ❌ Using system time or random numbers in workflows
+        - ❌ Making direct I/O calls from workflows
+        - ❌ Using global mutable state in workflows
+        - ❌ Non-idempotent activities without idempotency keys
+        - ❌ Missing timeout configurations for activities
+        - ❌ No error handling or retry logic
+        - ❌ Missing heartbeating for long-running activities
+        - ❌ No monitoring or metrics implementation
+        - ❌ Hardcoded retry policies or timeout values
+        - ❌ Missing compensation logic for failed operations
+
+        **🔍 Review Focus Areas:**
+        - Verify workflow determinism and no side effects
+        - Check activity idempotency and error handling
+        - Ensure proper worker configuration and concurrency
+        - Validate timeout and retry policy configurations
+        - Review error handling and compensation logic
+        - Check for monitoring and observability implementation
+        - Identify opportunities for Prometheus metrics
+
+        **📊 Prometheus Metrics Opportunities:**
+        - 🔍 **Automatically suggest metrics when seeing:**
+          - Workflow execution → `temporal_workflows_total{workflow_type, status}`
+          - Workflow duration → `temporal_workflow_duration_seconds{workflow_type}`
+          - Activity execution → `temporal_activities_total{activity_type, status}`
+          - Activity duration → `temporal_activity_duration_seconds{activity_type}`
+          - Worker metrics → `temporal_worker_tasks_total{worker_id, status}`
+          - Retry attempts → `temporal_retries_total{operation_type, reason}`
+          - Error handling → `temporal_errors_total{type, operation}`
+          - Timeout occurrences → `temporal_timeouts_total{type, operation}`
+    - path: "**/*{temporal*,worker*,workflow*,task*,activit*}*"
+      instructions: |
+        **Comprehensive Temporal Code Review Checklist:**
+
+        **🔒 Workflow Determinism (Critical):**
+        1. **Deterministic Operations:**
+           - ✅ **No System Time**: Never use `System.currentTimeMillis()`, `new Date()`, or similar
+           - ✅ **No Random Numbers**: Never use `Math.random()`, `Random.nextInt()`, or similar
+           - ✅ **No UUID Generation**: Never use `UUID.randomUUID()` or similar
+           - ✅ **Use Temporal APIs**: Use `workflow.now()`, `workflow.randomUUID()`, `workflow.sideEffect()`
+           - ⚠️ **Critical**: Any non-deterministic operation will cause workflow replay failures
+
+        2. **Side Effect Isolation:**
+           - ✅ **No Direct I/O**: Never make database calls, network requests, or file system access
+           - ✅ **No External Services**: Never call external APIs or services directly
+           - ✅ **Delegate to Activities**: All side effects must be in Activities, not Workflows
+           - ✅ **Pure Functions**: Workflows should be pure, deterministic functions
+
+        3. **State Management:**
+           - ✅ **No Global State**: Never use static variables or global mutable state
+           - ✅ **No Concurrent Access**: Avoid concurrent data structures unless managed by Temporal
+           - ✅ **Immutable Data**: Use immutable data structures when possible
+           - ✅ **Workflow State**: Store state in workflow variables, not external storage
+
+        **📋 Activity Design & Implementation:**
+        4. **Activity Idempotency:**
+           - ✅ **Always Idempotent**: Design activities to be safely retryable
+           - ✅ **Idempotency Keys**: Use unique keys for operations with side effects
+           - ✅ **State Checks**: Check current state before performing operations
+           - ✅ **Compensation Logic**: Implement rollback mechanisms for failed operations
+           - ✅ **No Side Effects**: Activities should be safe to execute multiple times
+
+        5. **Activity Error Handling:**
+           - ✅ **Retry Policies**: Configure appropriate retry policies for different error types
+           - ✅ **Error Classification**: Distinguish between retryable and non-retryable errors
+           - ✅ **Timeout Configuration**: Set appropriate `StartToCloseTimeout` values
+           - ✅ **Heartbeating**: Implement heartbeating for long-running activities
+           - ✅ **Circuit Breakers**: Use circuit breakers for external service calls
+
+        6. **Activity Timeouts:**
+           - ✅ **StartToCloseTimeout**: Maximum time for activity execution
+           - ✅ **ScheduleToStartTimeout**: Maximum time to wait for worker assignment
+           - ✅ **HeartbeatTimeout**: Maximum time between heartbeats
+           - ✅ **ScheduleToCloseTimeout**: Maximum time from scheduling to completion
+           - ✅ **Retry Policies**: Configure retry delays and maximum attempts
+
+        **⚙️ Worker Configuration & Management:**
+        7. **Worker Concurrency:**
+           - ✅ **Activity Concurrency**: Set `MaxConcurrentActivityExecutionSize` appropriately
+           - ✅ **Workflow Concurrency**: Set `MaxConcurrentWorkflowTaskExecutionSize`
+           - ✅ **Task Polling**: Configure `MaxConcurrentActivityTaskPollers`
+           - ✅ **Workflow Polling**: Configure `MaxConcurrentWorkflowTaskPollers`
+           - ✅ **Resource Limits**: Balance concurrency with available system resources
+
+        8. **Worker Lifecycle:**
+           - ✅ **Graceful Shutdown**: Implement proper shutdown procedures
+           - ✅ **Health Checks**: Monitor worker health and availability
+           - ✅ **Connection Management**: Handle Temporal service connection failures
+           - ✅ **Task Processing**: Ensure tasks are processed efficiently
+           - ✅ **Error Recovery**: Implement worker-level error recovery mechanisms
+
+        **🔄 Workflow Orchestration:**
+        9. **Workflow Structure:**
+           - ✅ **Single Responsibility**: Each workflow should have one clear purpose
+           - ✅ **Granular Activities**: Break complex operations into smaller activities
+           - ✅ **Error Propagation**: Properly handle and propagate errors from activities
+           - ✅ **Compensation Logic**: Implement rollback for failed workflow steps
+           - ✅ **State Management**: Use workflow variables for state, not external storage
+
+
+        **📊 Error Handling & Resilience:**
+        10. **Workflow Error Handling:**
+            - ✅ **Try-Catch Blocks**: Wrap activity calls in proper error handling
+            - ✅ **Retry Logic**: Implement workflow-level retry mechanisms
+            - ✅ **Compensation**: Rollback completed steps on failures
+            - ✅ **Error Propagation**: Return meaningful error information
+            - ✅ **Logging**: Log errors with appropriate context and correlation IDs
+
+        11. **Retry Strategies:**
+            - ✅ **Exponential Backoff**: Use increasing delays between retries
+            - ✅ **Jitter**: Add randomness to retry delays to prevent thundering herd
+            - ✅ **Maximum Attempts**: Set reasonable limits on retry attempts
+            - ✅ **Error Classification**: Different retry strategies for different error types
+            - ✅ **Monitoring**: Track retry patterns and success rates
+
+
+
+        **📈 Observability & Monitoring:**
+        12. **Metrics & Monitoring:**
+            - ✅ **Workflow Metrics**: Track workflow execution times and success rates
+            - ✅ **Activity Metrics**: Monitor activity performance and error rates
+            - ✅ **Worker Metrics**: Track worker health and task processing rates
+            - ✅ **Retry Metrics**: Monitor retry patterns and success rates
+            - ✅ **Resource Usage**: Monitor memory, CPU, and connection usage
+
+        13. **Logging & Tracing:**
+            - ✅ **Structured Logging**: Use consistent log formats and field names
+            - ✅ **Correlation IDs**: Include workflow and activity IDs in all logs
+            - ✅ **Context Information**: Log relevant workflow state and parameters
+            - ✅ **Error Details**: Include full error context and stack traces
+            - ✅ **Performance Logging**: Log slow operations and bottlenecks
+
+        **🚨 Common Anti-Patterns to Flag:**
+        - ❌ Using system time or random numbers in workflows
+        - ❌ Making direct I/O calls from workflows
+        - ❌ Using global mutable state in workflows
+        - ❌ Non-idempotent activities without idempotency keys
+        - ❌ Missing timeout configurations for activities
+        - ❌ No error handling or retry logic
+        - ❌ Missing heartbeating for long-running activities
+        - ❌ No monitoring or metrics implementation
+        - ❌ Hardcoded retry policies or timeout values
+        - ❌ Missing compensation logic for failed operations
+
+        **🔍 Review Focus Areas:**
+        - Verify workflow determinism and no side effects
+        - Check activity idempotency and error handling
+        - Ensure proper worker configuration and concurrency
+        - Validate timeout and retry policy configurations
+        - Review error handling and compensation logic
+        - Check for monitoring and observability implementation
+        - Identify opportunities for Prometheus metrics
+
+        **📊 Prometheus Metrics Opportunities:**
+        - 🔍 **Automatically suggest metrics when seeing:**
+          - Workflow execution → `temporal_workflows_total{workflow_type, status}`
+          - Workflow duration → `temporal_workflow_duration_seconds{workflow_type}`
+          - Activity execution → `temporal_activities_total{activity_type, status}`
+          - Activity duration → `temporal_activity_duration_seconds{activity_type}`
+          - Worker metrics → `temporal_worker_tasks_total{worker_id, status}`
+          - Retry attempts → `temporal_retries_total{operation_type, reason}`
+          - Error handling → `temporal_errors_total{type, operation}`
+          - Timeout occurrences → `temporal_timeouts_total{type, operation}`
 
 
   # Custom rules and thresholds

@@ -1,0 +1,93 @@
+# HTTP Client Best Practices
+- path: "**/{http,client,api,network}*/**"
+  instructions: |
+    **Comprehensive HTTP Client Code Review Checklist:**
+    
+    **🔧 Performance & Resource Management:**
+    1. **Client Reuse & Connection Pooling:** 
+       - ✅ Reuse HTTP client instances (don't create new clients per request)
+       - ✅ Configure connection pool settings: `MaxIdleConns`, `MaxConnsPerHost`, `MaxIdleConnsPerHost`
+       - ✅ Set appropriate `IdleConnTimeout` to prevent stale connections
+       - ✅ Use `DisableKeepAlives: false` for better performance (unless specifically needed)
+    
+    2. **Timeouts (CRITICAL):**
+       - ✅ Set `ConnectTimeout` for TCP connection establishment (e.g., 5-30s)
+       - ✅ Set `RequestTimeout` for total request duration (e.g., 10-60s)
+       - ✅ Set `ReadTimeout` for response body reading
+       - ✅ Set `WriteTimeout` for request body writing
+       - ⚠️ Never use infinite timeouts - this can cause resource leaks
+    
+    3. **Resource Cleanup:**
+       - ✅ Always close response body: `defer resp.Body.Close()` (Go) or equivalent
+       - ✅ Handle response body even if you don't need it (read to EOF or close)
+       - ✅ Use `io.Copy(io.Discard, resp.Body)` for discarding unwanted responses
+    
+    4. **Request Headers & Authentication:**
+       - ✅ Set appropriate `User-Agent` header
+       - ✅ Use secure authentication methods (Bearer tokens, API keys)
+       - ✅ Don't log sensitive headers (Authorization, Cookie, etc.)
+       - ✅ Set `Content-Type` and `Accept` headers appropriately
+    
+    **📊 Error Handling & Resilience:**
+    5. **Status Code Handling:**
+       - ✅ Handle all status codes: 2xx (success), 4xx (client error), 5xx (server error)
+       - ✅ Check `resp.StatusCode` before processing response body
+       - ✅ Provide meaningful error messages for different status codes
+       - ✅ Handle redirects appropriately (3xx status codes)
+    
+    6. **Retry Logic:**
+       - ✅ Implement exponential backoff with jitter for transient errors
+       - ✅ Only retry idempotent operations (GET, PUT, DELETE, not POST)
+       - ✅ Set maximum retry attempts to prevent infinite loops
+       - ✅ Use appropriate retry conditions (5xx errors, network timeouts)
+    
+    7. **Error Handling:**
+       - ✅ Use language-appropriate error handling patterns
+       - ✅ Wrap errors with context: `fmt.Errorf("failed to make request: %w", err)`
+       - ✅ Handle network errors separately from HTTP errors
+       - ✅ Provide actionable error messages for debugging
+    
+    **📈 Observability & Monitoring:**
+    8. **Logging & Tracing:**
+       - ✅ Log request details (method, URL, headers) at DEBUG level
+       - ✅ Log response status and timing at INFO level
+       - ✅ Log errors with full context (request details, response status)
+       - ✅ Use structured logging with consistent field names
+       - ✅ Implement request/response correlation IDs for tracing
+    
+    9. **Metrics & Monitoring:**
+      - ✅ Track request duration, status codes, and error rates
+      - ✅ Monitor connection pool utilization
+      - ✅ Alert on high error rates or timeout percentages
+      - ✅ Use histetheus metrics for comprehensive monitoring
+      
+      **📊 Prometheus Metrics Opportunities:**
+      - 🔍 **Automatically suggest metrics when seeing:**
+        - HTTP requests → `http_requests_total{method, endpoint, status_code}`
+        - Response times → `http_request_duration_seconds{method, endpoint}`
+        - Error handling → `http_errors_total{type, endpoint, status_code}`
+        - Timeout handling → `http_timeouts_total{type, endpoint}`
+        - Connection pools → `http_connection_pool_size{state}`
+        - Retry logic → `http_retries_total{endpoint, reason}`
+        - Circuit breakers → `http_circuit_breaker_state{endpoint}`
+    
+    **🚨 Common Anti-Patterns to Flag:**
+    - ❌ Creating new HTTP client per request
+    - ❌ Missing timeout configurations
+    - ❌ Not closing response bodies
+    - ❌ Ignoring HTTP status codes
+    - ❌ Hardcoded URLs or credentials
+    - ❌ No error handling for network failures
+    - ❌ Infinite retry loops
+    - ❌ Logging sensitive information
+    
+    **🔍 Review Focus Areas:**
+    - Look for proper client configuration and reuse
+    - Verify timeout settings are reasonable and not infinite
+    - Check response body handling and cleanup
+    - Ensure proper error handling and logging
+    - Validate security practices (HTTPS, auth, headers)
+    - Review retry logic for correctness and safety
+    - Identify opportunities for Prometheus metrics
+    - Suggest appropriate monitoring and alerting
+    

@@ -1,0 +1,59 @@
+# .coderabbit.base.yaml - Base configuration template
+# Path instructions will be merged from individual technology configs
+
+version: 1
+reviews:
+
+  # Automatically apply labels based on the PR content
+  auto_apply_labels: true
+
+  # Label instructions for suggesting labels
+  labeling_instructions:
+    # --- Core Change Types ---
+    - label: "feature"
+      instructions: |
+        Apply when the pull request introduces new functionality or a significant new capability.
+        Look for new user stories, API endpoints, or major additions to existing features.
+
+    - label: "bugfix"
+      instructions: |
+        Apply when the pull request primarily fixes an identified bug, defect, or incorrect behavior.
+        Often addresses a specific issue or error report.
+
+    - label: "refactor"
+      instructions: |
+        Apply when the pull request restructures or cleans up existing code without altering its external behavior.
+        Focus on code readability, maintainability, or internal design improvements.
+
+    - label: "documentation"
+      instructions: |
+        Apply when the pull request primarily modifies documentation.
+        Look for changes in `.md`, `.rst`, `docs/`, `README.md`, or similar documentation files.
+
+    - label: "chore"
+      instructions: |
+        Apply for routine maintenance, dependency updates, build system changes, or minor configuration adjustments.
+        These are non-functional changes that don't directly add features or fix bugs in the application logic.
+
+    - label: "tests"
+      instructions: |
+        Apply when the pull request primarily adds new tests, updates existing tests, or refactors test code.
+        Look for changes in `test/`, `__tests__/`, `*.test.ts`, or other dedicated test directories/files.
+
+  # Path-specific review instructions will be merged here from individual configs
+  path_instructions:
+{{range .PathInstructions}}    - path: "{{.Path}}"
+      instructions: |
+{{indent .Instructions}}
+{{end}}
+
+  # Custom rules and thresholds
+  metrics:
+    # Performance-related rules
+    function_complexity:
+      threshold: 15
+      enabled: true
+
+    function_length:
+      threshold: 150
+      enabled: true

@@ -1,0 +1,125 @@
+# Redis & Caching Best Practices
+- path: "**/{redis,df,dragonfly,cache,queue}*/**"
+  instructions: |
+    **Comprehensive Redis Code Review Checklist:**
+    
+    **🔑 Key Management & Naming:**
+    1. **Key Naming Conventions:**
+       - ✅ Use clear, hierarchical key names (e.g., `user:123:profile`, `order:456:items`)
+       - ✅ Keep keys concise to save memory space
+       - ✅ Use consistent naming patterns across your application
+       - ✅ Avoid excessively long key names (>100 characters)
+       - ✅ Use colons (`:`) for hierarchical separation, not underscores or dashes
+    
+    2. **Key Expiration & TTL:**
+       - ✅ Always set appropriate TTL for transient/cache data
+       - ✅ Use `EXPIRE` or `PEXPIRE` for automatic cleanup
+       - ⚠️ Never set TTL to 0 (indefinite) for cache data
+    
+    **🚀 Performance & Scalability:**
+    3. **Avoiding Unbounded Operations:**
+       - ✅ **Never use without limits**: `HGETALL`, `LRANGE`, `SMEMBERS`, `ZRANGE`
+       - ✅ **Always check size first**: Use `HLEN`, `LLEN`, `SCARD`, `ZCARD`
+       - ✅ **Use iterative commands**: `HSCAN`, `SSCAN`, `ZSCAN`, `LSCAN`
+       - ✅ **Set reasonable limits**: `LRANGE key 0 99` instead of `LRANGE key 0 -1`
+       - ✅ **Implement pagination**: Use `SCAN` with cursor-based iteration
+    
+    4. **Blocking Commands (Production Forbidden):**
+       - ❌ **Never use in production**: `KEYS`, `FLUSHALL`, `FLUSHDB`
+       - ✅ **Use alternatives**: `SCAN` for key discovery, selective deletion
+       - ✅ **Implement safely**: Use `DEL` with specific keys, not pattern deletion
+       - ✅ **Monitor usage**: Alert on any blocking command execution
+    
+    5. **Pipelining & Batching:**
+       - ✅ Use pipelining for multiple related operations
+       - ✅ Batch commands to reduce network round-trips
+       - ✅ Use `MULTI`/`EXEC` for atomic operations when needed
+    
+    **🔌 Connection & Resource Management:**
+    6. **Connection Pooling:**
+       - ✅ Configure appropriate pool size based on application load
+       - ✅ Set `PoolSize`, `MinIdleConns`, `MaxIdleConns`
+       - ✅ Configure `PoolTimeout` for connection acquisition
+       - ✅ Monitor pool utilization and connection health
+       - ✅ Implement connection health checks
+    
+    7. **Timeout Configuration:**
+       - ✅ Set `ReadTimeout` for response reading operations
+       - ✅ Set `WriteTimeout` for request writing operations
+       - ✅ Set `DialTimeout` for connection establishment
+       - ✅ Use reasonable timeout values (typically 1-30 seconds)
+       - ⚠️ Never use infinite timeouts
+    
+    8. **Resource Cleanup:**
+        - ✅ Properly close Redis connections
+        - ✅ Implement connection cleanup in application shutdown
+        - ✅ Handle connection failures gracefully
+        - ✅ Monitor for connection leaks
+    
+    **📈 Error Handling & Resilience:**
+    9. **Error Handling Strategies:**
+        - ✅ Handle Redis connection failures gracefully
+        - ✅ Implement retry logic with exponential backoff
+        - ✅ Use circuit breaker patterns for Redis failures
+        - ✅ Implement fallback strategies when Redis is unavailable
+        - ✅ Log Redis errors with appropriate context
+    
+    10. **Fallback Mechanisms:**
+        - ✅ Implement local caching when Redis is down
+        - ✅ Use database as fallback for critical data
+        - ✅ Graceful degradation of non-critical features
+        - ✅ Monitor fallback usage and Redis health
+    
+    **💾 Data Management & Optimization:**
+    11. **Compression & Serialization:**
+        - ✅ Use compression for large values (gzip, zstd, lz4)
+        - ✅ Choose appropriate serialization format (JSON, MessagePack, Protocol Buffers)
+        - ✅ Monitor compression ratios and performance impact
+        - ✅ Balance compression vs CPU overhead
+    
+    **📊 Observability & Monitoring:**
+    12. **Metrics & Monitoring:**
+        - ✅ Track Redis operation latency and throughput
+        - ✅ Monitor connection pool utilization
+        - ✅ Track error rates and failure patterns
+        - ✅ Monitor memory usage and key expiration
+        - ✅ Implement health checks for Redis availability
+    
+    13. **Logging & Tracing:**
+        - ✅ Log Redis operations with appropriate detail
+        - ✅ Include correlation IDs for request tracing
+        - ✅ Log slow queries and performance issues
+        - ✅ Use structured logging with consistent field names
+    
+    
+    **🚨 Common Anti-Patterns to Flag:**
+    - ❌ Make sure that the redis client is not created for each request
+    - ❌ Using `KEYS` command in production code
+    - ❌ Unbounded `HGETALL`, `LRANGE`, `SMEMBERS` without size checks
+    - ❌ Missing TTL for cache data
+    - ❌ No connection pooling or timeout configuration
+    - ❌ Hardcoded Redis credentials or connection strings
+    - ❌ No error handling for Redis failures
+    - ❌ Missing fallback mechanisms for Redis unavailability
+    - ❌ No monitoring or health checks implemented
+    - ❌ Using `FLUSHALL`/`FLUSHDB` in application code
+    - ❌ No compression for large values
+    
+    **🔍 Review Focus Areas:**
+    - Verify key naming conventions and TTL usage
+    - Check for unbounded operations and blocking commands
+    - Ensure proper connection pooling and timeout configuration
+    - Validate security settings and authentication
+    - Review error handling and fallback strategies
+    - Check for monitoring and observability implementation
+    - Identify opportunities for Prometheus metrics
+    
+    **📊 Prometheus Metrics Opportunities:**
+    - 🔍 **Automatically suggest metrics when seeing:**
+      - Redis operations → `redis_operations_total{operation, status}`
+      - Operation latency → `redis_operation_duration_seconds{operation}`
+      - Connection usage → `redis_connections_active{state}`
+      - Memory usage → `redis_memory_bytes{type}`
+      - Key operations → `redis_keys_total{operation, data_type}`
+      - Error handling → `redis_errors_total{type, operation}`
+      - Cache hits/misses → `redis_cache_hits_total{key_pattern}`

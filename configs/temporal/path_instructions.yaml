@@ -1,0 +1,134 @@
+# Temporal Workflows & Activities Best Practices
+- path: "**/{temporal,worker,workflow,task,activit}*/**"
+  instructions: |
+    **Comprehensive Temporal Code Review Checklist:**
+    
+    **🔒 Workflow Determinism (Critical):**
+    1. **Deterministic Operations:**
+       - ✅ **No System Time**: Never use `System.currentTimeMillis()`, `new Date()`, or similar
+       - ✅ **No Random Numbers**: Never use `Math.random()`, `Random.nextInt()`, or similar
+       - ✅ **No UUID Generation**: Never use `UUID.randomUUID()` or similar
+       - ✅ **Use Temporal APIs**: Use `workflow.now()`, `workflow.randomUUID()`, `workflow.sideEffect()`
+       - ⚠️ **Critical**: Any non-deterministic operation will cause workflow replay failures
+    
+    2. **Side Effect Isolation:**
+       - ✅ **No Direct I/O**: Never make database calls, network requests, or file system access
+       - ✅ **No External Services**: Never call external APIs or services directly
+       - ✅ **Delegate to Activities**: All side effects must be in Activities, not Workflows
+       - ✅ **Pure Functions**: Workflows should be pure, deterministic functions
+    
+    3. **State Management:**
+       - ✅ **No Global State**: Never use static variables or global mutable state
+       - ✅ **No Concurrent Access**: Avoid concurrent data structures unless managed by Temporal
+       - ✅ **Immutable Data**: Use immutable data structures when possible
+       - ✅ **Workflow State**: Store state in workflow variables, not external storage
+    
+    **📋 Activity Design & Implementation:**
+    4. **Activity Idempotency:**
+       - ✅ **Always Idempotent**: Design activities to be safely retryable
+       - ✅ **Idempotency Keys**: Use unique keys for operations with side effects
+       - ✅ **State Checks**: Check current state before performing operations
+       - ✅ **Compensation Logic**: Implement rollback mechanisms for failed operations
+       - ✅ **No Side Effects**: Activities should be safe to execute multiple times
+    
+    5. **Activity Error Handling:**
+       - ✅ **Retry Policies**: Configure appropriate retry policies for different error types
+       - ✅ **Error Classification**: Distinguish between retryable and non-retryable errors
+       - ✅ **Timeout Configuration**: Set appropriate `StartToCloseTimeout` values
+       - ✅ **Heartbeating**: Implement heartbeating for long-running activities
+       - ✅ **Circuit Breakers**: Use circuit breakers for external service calls
+    
+    6. **Activity Timeouts:**
+       - ✅ **StartToCloseTimeout**: Maximum time for activity execution
+       - ✅ **ScheduleToStartTimeout**: Maximum time to wait for worker assignment
+       - ✅ **HeartbeatTimeout**: Maximum time between heartbeats
+       - ✅ **ScheduleToCloseTimeout**: Maximum time from scheduling to completion
+       - ✅ **Retry Policies**: Configure retry delays and maximum attempts
+    
+    **⚙️ Worker Configuration & Management:**
+    7. **Worker Concurrency:**
+       - ✅ **Activity Concurrency**: Set `MaxConcurrentActivityExecutionSize` appropriately
+       - ✅ **Workflow Concurrency**: Set `MaxConcurrentWorkflowTaskExecutionSize`
+       - ✅ **Task Polling**: Configure `MaxConcurrentActivityTaskPollers`
+       - ✅ **Workflow Polling**: Configure `MaxConcurrentWorkflowTaskPollers`
+       - ✅ **Resource Limits**: Balance concurrency with available system resources
+    
+    8. **Worker Lifecycle:**
+       - ✅ **Graceful Shutdown**: Implement proper shutdown procedures
+       - ✅ **Health Checks**: Monitor worker health and availability
+       - ✅ **Connection Management**: Handle Temporal service connection failures
+       - ✅ **Task Processing**: Ensure tasks are processed efficiently
+       - ✅ **Error Recovery**: Implement worker-level error recovery mechanisms
+    
+    **🔄 Workflow Orchestration:**
+    9. **Workflow Structure:**
+       - ✅ **Single Responsibility**: Each workflow should have one clear purpose
+       - ✅ **Granular Activities**: Break complex operations into smaller activities
+       - ✅ **Error Propagation**: Properly handle and propagate errors from activities
+       - ✅ **Compensation Logic**: Implement rollback for failed workflow steps
+       - ✅ **State Management**: Use workflow variables for state, not external storage
+    
+    
+    **📊 Error Handling & Resilience:**
+    10. **Workflow Error Handling:**
+        - ✅ **Try-Catch Blocks**: Wrap activity calls in proper error handling
+        - ✅ **Retry Logic**: Implement workflow-level retry mechanisms
+        - ✅ **Compensation**: Rollback completed steps on failures
+        - ✅ **Error Propagation**: Return meaningful error information
+        - ✅ **Logging**: Log errors with appropriate context and correlation IDs
+    
+    11. **Retry Strategies:**
+        - ✅ **Exponential Backoff**: Use increasing delays between retries
+        - ✅ **Jitter**: Add randomness to retry delays to prevent thundering herd
+        - ✅ **Maximum Attempts**: Set reasonable limits on retry attempts
+        - ✅ **Error Classification**: Different retry strategies for different error types
+        - ✅ **Monitoring**: Track retry patterns and success rates
+    
+    
+    
+    **📈 Observability & Monitoring:**
+    12. **Metrics & Monitoring:**
+        - ✅ **Workflow Metrics**: Track workflow execution times and success rates
+        - ✅ **Activity Metrics**: Monitor activity performance and error rates
+        - ✅ **Worker Metrics**: Track worker health and task processing rates
+        - ✅ **Retry Metrics**: Monitor retry patterns and success rates
+        - ✅ **Resource Usage**: Monitor memory, CPU, and connection usage
+    
+    13. **Logging & Tracing:**
+        - ✅ **Structured Logging**: Use consistent log formats and field names
+        - ✅ **Correlation IDs**: Include workflow and activity IDs in all logs
+        - ✅ **Context Information**: Log relevant workflow state and parameters
+        - ✅ **Error Details**: Include full error context and stack traces
+        - ✅ **Performance Logging**: Log slow operations and bottlenecks
+    
+    **🚨 Common Anti-Patterns to Flag:**
+    - ❌ Using system time or random numbers in workflows
+    - ❌ Making direct I/O calls from workflows
+    - ❌ Using global mutable state in workflows
+    - ❌ Non-idempotent activities without idempotency keys
+    - ❌ Missing timeout configurations for activities
+    - ❌ No error handling or retry logic
+    - ❌ Missing heartbeating for long-running activities
+    - ❌ No monitoring or metrics implementation
+    - ❌ Hardcoded retry policies or timeout values
+    - ❌ Missing compensation logic for failed operations
+    
+    **🔍 Review Focus Areas:**
+    - Verify workflow determinism and no side effects
+    - Check activity idempotency and error handling
+    - Ensure proper worker configuration and concurrency
+    - Validate timeout and retry policy configurations
+    - Review error handling and compensation logic
+    - Check for monitoring and observability implementation
+    - Identify opportunities for Prometheus metrics
+    
+    **📊 Prometheus Metrics Opportunities:**
+    - 🔍 **Automatically suggest metrics when seeing:**
+      - Workflow execution → `temporal_workflows_total{workflow_type, status}`
+      - Workflow duration → `temporal_workflow_duration_seconds{workflow_type}`
+      - Activity execution → `temporal_activities_total{activity_type, status}`
+      - Activity duration → `temporal_activity_duration_seconds{activity_type}`
+      - Worker metrics → `temporal_worker_tasks_total{worker_id, status}`
+      - Retry attempts → `temporal_retries_total{operation_type, reason}`
+      - Error handling → `temporal_errors_total{type, operation}`
+      - Timeout occurrences → `temporal_timeouts_total{type, operation}`

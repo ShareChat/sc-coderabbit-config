@@ -1,0 +1,124 @@
+# Apache Kafka Best Practices
+- path: "**/{kafka,producer,consumer,broker,topic,stream}*/**"
+  instructions: |
+    **Comprehensive Kafka Code Review Checklist:**
+    
+    **🔧 Client Lifecycle & Resource Management:**
+    1. **Singleton Client Pattern:**
+       - ✅ Reuse Kafka client instances (Producer, Consumer) throughout application lifecycle
+       - ✅ Avoid creating new clients per request/operation
+       - ✅ Use dependency injection or singleton patterns for client management
+       - ⚠️ Never create clients inside loops or per-message functions
+    
+    2. **Connection Management:**
+       - ✅ Configure appropriate connection pool settings
+       - ✅ Set reasonable connection timeouts and retry policies
+       - ✅ Handle connection failures gracefully with exponential backoff
+       - ✅ Implement proper client cleanup and shutdown procedures
+    
+    **📤 Producer Configuration & Best Practices:**
+    3. **Performance Tuning:**
+       - ✅ Configure `MaxBatchBytes` for optimal batch sizes (e.g., 16KB-1MB)
+       - ✅ Set `MaxBufferedRecords` to control memory usage
+       - ✅ Use `ProducerLinger` to balance latency vs throughput
+       - ✅ Configure `RecordRetries` for failed message handling (typically 3-5)
+       - ✅ Set `ProduceRequestTimeout` to prevent indefinite hangs
+    
+    4. **Reliability & Consistency:**
+       - ✅ Enable idempotent producers (`enable.idempotence=true`) to prevent duplicates
+       - ✅ Configure `RequiredAcks` based on durability needs:
+         - `LeaderAck` for high throughput, lower durability
+         - `AllISRAcks` for highest durability, lower throughput
+       - ✅ Implement proper error handling for different failure scenarios
+    
+    5. **Batching & Compression:**
+       - ✅ Enable compression (Gzip, Snappy, LZ4, Zstd) for network efficiency
+       - ✅ Tune `batch.size` and `linger.ms` for optimal compression ratios
+       - ✅ Ensure `max.request.size` accommodates your batch sizes
+    
+    **📥 Consumer Configuration & Best Practices:**
+    6. **Performance & Efficiency:**
+       - ✅ Configure `FetchMinBytes` and `FetchMaxBytes` for optimal throughput
+       - ✅ Set `MaxConcurrentFetches` based on available resources
+       - ✅ Use appropriate `SessionTimeout` and `RebalanceTimeout` values
+       - ✅ Configure `HeartbeatInterval` for stable consumer group membership
+    
+    7. **Offset Management:**
+       - ✅ Use `enable.auto.commit=false` for manual control when needed
+       - ✅ Handle offset commit failures gracefully
+       - ✅ Implement offset reset strategies for consumer group scenarios
+       - ✅ Monitor consumer lag and implement alerting
+    
+    8. **Consumer Group Management:**
+       - ✅ Ensure consumers are part of a consumer group
+       - ✅ Handle rebalancing events properly
+       - ✅ Implement graceful shutdown procedures
+       - ✅ Monitor consumer group health and stability
+    
+    **🛡️ Security & Best Practices:**
+    9. **Authentication & Authorization:**
+       - ✅ Use secure credential management (not hardcoded)
+    
+    10. **Data Security:**
+        - ✅ Use encryption for sensitive data in transit
+        - ✅ Implement proper key management for encrypted topics
+        - ✅ Audit access patterns and implement monitoring
+        - ✅ Follow principle of least privilege for topic access
+    
+    **📊 Error Handling & Resilience:**
+    11. **Error Classification & Handling:**
+        - ✅ Distinguish between transient and permanent errors
+        - ✅ Implement retry logic with exponential backoff for transient errors
+        - ✅ Handle permanent errors gracefully (log, alert, circuit break)
+        - ✅ Implement dead letter queues for failed messages
+        - ✅ Monitor error rates and implement alerting
+    
+    12. **Circuit Breaker Patterns:**
+        - ✅ Implement circuit breakers for broker failures
+        - ✅ Monitor circuit breaker state and metrics
+        - ✅ Implement fallback mechanisms when possible
+    
+    **📈 Observability & Monitoring:**
+    13. **Metrics & Monitoring:**
+        - ✅ Track producer/consumer throughput and latency
+        - ✅ Monitor consumer lag and offset commit success rates
+        - ✅ Track error rates and failure patterns
+        - ✅ Monitor connection pool utilization and health
+        - ✅ Implement health checks for Kafka clients
+    
+    14. **Logging & Tracing:**
+        - ✅ Log important operations (produce/consume, errors, rebalances)
+        - ✅ Include correlation IDs for request tracing
+        - ✅ Log configuration changes and client lifecycle events
+        - ✅ Use structured logging with consistent field names
+    
+    **🚨 Common Anti-Patterns to Flag:**
+    - ❌ Creating new Kafka clients per operation
+    - ❌ Missing error handling for network failures
+    - ❌ No retry logic for transient errors
+    - ❌ Missing timeout configurations
+    - ❌ Hardcoded broker addresses or credentials
+    - ❌ No monitoring or metrics implementation
+    - ❌ Missing consumer group configuration
+    - ❌ No offset commit error handling
+    - ❌ Disabled idempotence without justification
+    - ❌ No compression enabled for producers
+    
+    **🔍 Review Focus Areas:**
+    - Verify client lifecycle management and reuse patterns
+    - Check producer/consumer configuration for optimal settings
+    - Ensure proper error handling and retry logic
+    - Validate security configurations and authentication
+    - Review offset management and consumer group handling
+    - Check for monitoring and observability implementation
+    - Identify opportunities for Prometheus metrics
+    
+    **📊 Prometheus Metrics Opportunities:**
+    - 🔍 **Automatically suggest metrics when seeing:**
+      - Kafka producers → `kafka_producer_messages_total{topic, status}`
+      - Kafka consumers → `kafka_consumer_messages_total{topic, partition}`
+      - Message processing → `kafka_message_duration_seconds{topic, operation}`
+      - Error handling → `kafka_errors_total{type, topic, operation}`
+      - Consumer lag → `kafka_consumer_lag{topic, partition, group}`
+      - Connection health → `kafka_connection_status{broker, state}`
+      - Offset commits → `kafka_offset_commits_total{topic, group, status}`

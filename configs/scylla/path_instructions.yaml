@@ -1,0 +1,107 @@
+# ScyllaDB Best Practices
+- path: "**/{scylladb,scylla}*/**"
+  instructions: |
+    **Comprehensive ScyllaDB Code Review Checklist:**
+    
+    **🔧 Client Lifecycle & Resource Management:**
+    1. **Connection Management:**
+       - ✅ Configure appropriate connection pool size and timeouts
+       - ✅ Implement graceful connection closing and cleanup
+       - ✅ Handle connection failures with exponential backoff
+       - ⚠️ Never create new client connections per request
+    
+    2. **Session Management:**
+       - ✅ Reuse session instances throughout application lifecycle
+       - ✅ Configure session-level timeouts and retry policies
+       - ✅ Implement proper session cleanup in application shutdown
+       - ✅ Monitor session health and connection status
+    
+    **📊 Query Performance & Optimization:**
+    3. **Prepared Statements:**
+       - ✅ Use prepared statements for frequently executed queries
+       - ✅ Cache prepared statements at application level
+       - ✅ Avoid dynamic query construction to prevent CQL injection
+       - ✅ Monitor prepared statement cache hit rates
+    
+    4. **Query Timeouts:**
+       - ✅ Set explicit timeouts for all queries (typically 5-30 seconds)
+       - ✅ Configure different timeouts for reads vs writes
+       - ✅ Implement query cancellation for long-running operations
+       - ⚠️ Never use infinite timeouts - can cause resource exhaustion
+    
+    5. **Consistency Levels:**
+       - ✅ Explicitly set appropriate consistency levels for all operations
+       - ✅ **Read Consistency**: `ONE` (fast), `LOCAL_QUORUM` (balanced), `QUORUM` (strong)
+       - ✅ **Write Consistency**: `ONE` (fast), `LOCAL_QUORUM` (balanced), `QUORUM` (strong)
+       - ✅ Understand trade-offs: higher consistency = lower availability + higher latency
+       - ✅ Document consistency level choices with business justification
+    
+    **🚀 Performance & Scalability:**
+    6. **BYPASS CACHE Optimization:**
+       - ✅ Use `BYPASS CACHE` for large range queries that aren't latency-sensitive
+    
+    7. **Batch Operations:**
+       - ✅ Use batch statements for multiple related operations
+       - ✅ Keep batch sizes reasonable (typically 10-100 operations)
+    
+    **🛡️ Security & Best Practices:**
+    8. **Authentication & Authorization:**
+       - ✅ Use proper authentication (username/password, certificates)
+       - ✅ Use secure credential management (environment variables, not hardcoded)
+    
+    9. **Query Security:**
+        - ✅ Use parameterized queries to prevent CQL injection
+    
+    **📈 Error Handling & Resilience:**
+    10. **Retry Strategies:**
+        - ✅ Implement intelligent retry logic with exponential backoff
+        - ✅ Use jitter in retry delays to prevent thundering herd
+        - ⚠️ **Critical**: Avoid aggressive retries during database surges
+        - ✅ Monitor retry patterns and adjust strategies accordingly
+    
+    11. **Error Classification:**
+        - ✅ Handle `UnavailableException` for temporary failures
+        - ✅ Handle `ReadTimeoutException` and `WriteTimeoutException`
+        - ✅ Handle `ConsistencyException` for consistency level violations
+        - ✅ Implement circuit breaker patterns for persistent failures
+    
+    
+    **📊 Observability & Monitoring:**
+    12. **Metrics & Monitoring:**
+        - ✅ Track query latency and throughput
+        - ✅ Monitor connection pool utilization
+    
+    13. **Logging & Tracing:**
+        - ✅ Log slow queries and performance issues
+        - ✅ Include correlation IDs for request tracing
+        - ✅ Log consistency level violations and retries
+        - ✅ Use structured logging with consistent field names
+    
+    **🚨 Common Anti-Patterns to Flag:**
+    - ❌ Creating new ScyllaDB clients per request
+    - ❌ Missing query timeouts or infinite timeouts
+    - ❌ No retry logic for transient failures
+    - ❌ Missing consistency level configuration
+    - ❌ Hardcoded credentials or connection strings
+    - ❌ No monitoring or metrics implementation
+    - ❌ No prepared statement usage for repeated queries
+    - ❌ Aggressive retries during database surges
+    - ❌ Missing error handling for different exception types
+    
+    **🔍 Review Focus Areas:**
+    - Verify client lifecycle management and connection pooling
+    - Check query timeout configurations and consistency levels
+    - Ensure proper error handling and retry strategies
+    - Validate security configurations and authentication
+    - Check for monitoring and observability implementation
+    - Identify opportunities for Prometheus metrics
+    
+    **📊 Prometheus Metrics Opportunities:**
+    - 🔍 **Automatically suggest metrics when seeing:**
+      - ScyllaDB queries → `scylla_queries_total{operation, consistency, status}`
+      - Query latency → `scylla_query_duration_seconds{operation, consistency}`
+      - Connection usage → `scylla_connections_active{state}`
+      - Consistency violations → `scylla_consistency_violations_total{operation}`
+      - Retry attempts → `scylla_retries_total{operation, reason}`
+      - Cache operations → `scylla_cache_operations_total{operation, status}`
+  
