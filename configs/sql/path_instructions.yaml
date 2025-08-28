@@ -1,0 +1,133 @@
+# PostgreSQL / CloudSQL Best Practices
+- path: "**/{postgres,cloudsql,db,database,sql,psql}*/**"
+  instructions: |
+    **Comprehensive PostgreSQL/CloudSQL Code Review Checklist:**
+    
+    **🛡️ Security & Injection Prevention:**
+    1. **SQL Injection Prevention:**
+       - ✅ **Always use parameterized queries** to prevent SQL injection
+       - ✅ Use prepared statements for repeated queries
+       - ✅ Never concatenate user input directly into SQL strings
+       - ✅ Use ORM query builders when possible for additional safety
+       - ⚠️ **Critical**: Flag any string concatenation in SQL queries
+    
+    **🚀 Performance & Query Optimization:**
+    2. **Query Performance Analysis:**
+       - ✅ **N+1 Query Detection**: Look for loops that execute database queries
+       - ✅ **Batching**: Use `IN` clauses or batch operations instead of individual queries
+    
+    3. **Performance Anti-Patterns:**
+       - ❌ **FULL SCAN**: Avoid table scans on large tables
+       - ❌ **CARTESIAN JOIN**: Never use cross joins without explicit WHERE conditions
+       - ❌ **SELECT ***: Always specify required columns explicitly
+       - ❌ **Subqueries in SELECT**: Use JOINs when possible
+       - ❌ **Functions on indexed columns**: Avoid applying functions to indexed columns
+    
+    
+    **🔌 Connection & Resource Management:**
+    4. **Connection Management:**
+       - ✅ Use connection pooling (PgBouncer, application-level pools)
+       - ✅ Configure appropriate pool size based on application load
+       - ✅ Set connection timeouts and idle connection limits
+       - ✅ Implement proper connection cleanup and error handling
+       - ✅ Monitor connection pool utilization and health
+    
+    5. **Resource Cleanup:**
+       - ✅ Always close database connections after use
+       - ✅ Use try-with-resources or defer statements for cleanup
+       - ✅ Implement proper error handling with connection cleanup
+       - ✅ Monitor for connection leaks and resource exhaustion
+       - ✅ Handle connection failures gracefully with retry logic
+    
+    **📊 Transaction Management:**
+    6. **Transaction Best Practices:**
+       - ✅ **Explicit Transactions**: Use `BEGIN`, `COMMIT`, and `ROLLBACK` explicitly
+       - ✅ **Short Transactions**: Keep transactions as short as possible
+       - ✅ **Error Handling**: Implement proper rollback on errors
+       - ✅ **Isolation Levels**: Understand and use appropriate isolation levels
+       - ✅ **Deadlock Prevention**: Order operations consistently to avoid deadlocks
+       - ✅ **Monitoring**: Track transaction duration and failure rates
+    
+    7. **Transaction Patterns:**
+       - ✅ **Read-Only Transactions**: Use for consistent reads across multiple queries
+       - ✅ **Write Transactions**: Group related modifications in single transactions
+       - ✅ **Nested Transactions**: Use savepoints for complex transaction logic
+       - ✅ **Distributed Transactions**: Consider 2PC for multi-database operations
+    
+    
+    **📈 Error Handling & Resilience:**
+    8. **Error Handling Strategies:**
+        - ✅ **Connection Errors**: Handle connection failures with retry logic
+        - ✅ **Query Errors**: Handle syntax and constraint violation errors
+        - ✅ **Transaction Errors**: Implement proper rollback and retry logic
+        - ✅ **Deadlock Handling**: Implement exponential backoff for deadlock retries
+        - ✅ **Logging**: Log all database errors with context and stack traces
+    
+    9. **Retry Logic:**
+        - ✅ Implement exponential backoff with jitter for transient errors
+        - ✅ Set maximum retry attempts to prevent infinite loops
+        - ✅ Use circuit breaker patterns for persistent failures
+        - ✅ Monitor retry patterns and adjust strategies accordingly
+    
+    **🔍 Query Clarity & Maintainability:**
+    10. **Query Readability:**
+        - ✅ **Aliases**: Use meaningful table and column aliases
+        - ✅ **Formatting**: Format SQL queries for readability
+        - ✅ **Comments**: Add comments for complex queries
+        - ✅ **Consistency**: Use consistent naming conventions
+        - ✅ **Modularity**: Break complex queries into smaller, readable parts
+    
+    11. **Query Optimization:**
+        - ✅ **LIMIT**: Always use LIMIT for potentially large result sets
+        - ✅ **OFFSET**: Use cursor-based pagination instead of OFFSET for large datasets
+        - ✅ **Window Functions**: Use window functions for ranking and aggregation
+        - ✅ **CTEs**: Use Common Table Expressions for complex queries
+        - ✅ **Materialized Views**: Consider materialized views for expensive aggregations
+    
+    
+    **📊 Observability & Monitoring:**
+    12. **Metrics & Monitoring:**
+        - ✅ Track query latency and throughput
+        - ✅ Monitor connection pool utilization
+        - ✅ Track slow query patterns and execution plans
+        - ✅ Monitor index usage and performance impact
+        - ✅ Track transaction success rates and durations
+        - ✅ Implement health checks for database availability
+    
+    13. **Logging & Tracing:**
+        - ✅ Log slow queries and performance issues
+        - ✅ Include correlation IDs for request tracing
+        - ✅ Log transaction conflicts and retry attempts
+        - ✅ Use structured logging with consistent field names
+        - ✅ Log query execution plans for optimization
+    
+    **🚨 Common Anti-Patterns to Flag:**
+    - ❌ String concatenation in SQL queries (SQL injection risk)
+    - ❌ Missing parameterized queries or prepared statements
+    - ❌ N+1 query patterns in loops
+    - ❌ Missing indexes on frequently queried columns
+    - ❌ Using `SELECT *` instead of specific columns
+    - ❌ Missing transaction boundaries for related operations
+    - ❌ No connection pooling or timeout configuration
+    - ❌ Hardcoded database credentials
+    - ❌ No error handling for database failures
+    - ❌ Missing LIMIT clauses on potentially large result sets
+    
+    **🔍 Review Focus Areas:**
+    - Verify SQL injection prevention and parameterized queries
+    - Check for N+1 query patterns and performance issues
+    - Ensure proper connection management and pooling
+    - Validate transaction design and error handling
+    - Review index usage and query optimization
+    - Check for monitoring and observability implementation
+    - Identify opportunities for Prometheus metrics
+    
+    **📊 Prometheus Metrics Opportunities:**
+    - 🔍 **Automatically suggest metrics when seeing:**
+      - Database queries → `postgres_queries_total{operation, table, status}`
+      - Query latency → `postgres_query_duration_seconds{operation, table}`
+      - Connection usage → `postgres_connections_active{state}`
+      - Transaction metrics → `postgres_transactions_total{type, status}`
+      - Index operations → `postgres_index_operations_total{operation, index_name}`
+      - Error handling → `postgres_errors_total{type, operation}`
+      - Connection pool → `postgres_connection_pool_size{state}`
