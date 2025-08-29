@@ -1,46 +1,149 @@
 # .coderabbit.base.yaml - Base configuration template
-# Path instructions will be merged from individual technology configs
+
 
 version: 1
 reviews:
 
-  # Automatically apply labels based on the PR content
+  # =============================================================================
+  # AUTOMATIC LABELING CONFIGURATION
+  # =============================================================================
+  # 
+  # When enabled, CodeRabbit will automatically suggest and apply labels
+  # based on the content and scope of pull requests. This helps with:
+  # - PR categorization and filtering
+  # - Automated workflows and notifications
+  # - Release note generation
+  # - Team communication and prioritization
   auto_apply_labels: true
 
-  # Label instructions for suggesting labels
+  # Label instructions define when and how to apply specific labels
+  # Each label has clear criteria to help CodeRabbit make accurate suggestions
   labeling_instructions:
     # --- Core Change Types ---
+    # These labels cover the fundamental types of changes in software development
+    
     - label: "feature"
       instructions: |
         Apply when the pull request introduces new functionality or a significant new capability.
         Look for new user stories, API endpoints, or major additions to existing features.
+        
+        EXAMPLES:
+        - New API endpoints or methods
+        - New user interface components
+        - New business logic or algorithms
+        - New configuration options
+        - New integration points with external services
 
     - label: "bugfix"
       instructions: |
         Apply when the pull request primarily fixes an identified bug, defect, or incorrect behavior.
         Often addresses a specific issue or error report.
+        
+        EXAMPLES:
+        - Fixing incorrect calculations or logic
+        - Resolving error handling issues
+        - Correcting UI display problems
+        - Fixing performance bottlenecks
+        - Resolving integration failures
 
     - label: "refactor"
       instructions: |
         Apply when the pull request restructures or cleans up existing code without altering its external behavior.
         Focus on code readability, maintainability, or internal design improvements.
+        
+        EXAMPLES:
+        - Renaming variables or functions for clarity
+        - Extracting common code into shared functions
+        - Improving code organization and structure
+        - Updating code style to match guidelines
+        - Optimizing internal algorithms without changing behavior
 
     - label: "documentation"
       instructions: |
         Apply when the pull request primarily modifies documentation.
         Look for changes in `.md`, `.rst`, `docs/`, `README.md`, or similar documentation files.
+        
+        EXAMPLES:
+        - Updating README files
+        - Adding inline code comments
+        - Creating or updating API documentation
+        - Writing user guides or tutorials
+        - Updating configuration examples
 
     - label: "chore"
       instructions: |
         Apply for routine maintenance, dependency updates, build system changes, or minor configuration adjustments.
         These are non-functional changes that don't directly add features or fix bugs in the application logic.
+        
+        EXAMPLES:
+        - Updating package dependencies
+        - Modifying build scripts or CI/CD configs
+        - Updating development environment setup
+        - Code formatting or linting fixes
+        - Repository maintenance tasks
 
     - label: "tests"
       instructions: |
         Apply when the pull request primarily adds new tests, updates existing tests, or refactors test code.
         Look for changes in `test/`, `__tests__/`, `*.test.ts`, or other dedicated test directories/files.
+        
+        EXAMPLES:
+        - Adding unit tests for new functionality
+        - Improving test coverage for existing code
+        - Refactoring test structure or organization
+        - Adding integration or end-to-end tests
+        - Updating test data or fixtures
+    
+    - label: "security"
+      instructions: |
+        Apply when the pull request addresses security vulnerabilities, implements security features,
+        or modifies authentication/authorization logic. Look for changes in security-related code,
+        encryption, input validation, or access control mechanisms.
+        
+        EXAMPLES:
+        - Adding input validation and sanitization
+        - Implementing authentication mechanisms
+        - Adding authorization checks
+        - Updating encryption or hashing
+        - Fixing security vulnerabilities
+        - Adding security headers or policies
 
-  # Path-specific review instructions will be merged here from individual configs
+    - label: "performance"
+      instructions: |
+        Apply when the pull request optimizes performance, reduces latency, improves throughput,
+        or addresses performance bottlenecks. Look for changes in caching, algorithm improvements, or
+        resource optimization changes.
+        
+        EXAMPLES:
+        - Adding caching mechanisms
+        - Optimizing database queries
+        - Improving algorithm efficiency
+        - Reducing memory usage
+        - Optimizing network requests
+        - Adding performance monitoring
+
+    - label: "dependencies"
+      instructions: |
+        Apply when the pull request updates, adds, or removes dependencies, packages,
+        or external libraries. Look for changes in package.json, requirements.txt,
+        go.mod, or similar dependency files.
+        
+        EXAMPLES:
+        - Updating package versions
+        - Adding new dependencies
+        - Removing unused dependencies
+        - Updating lock files
+        - Changing dependency sources
+
+  # =============================================================================
+  # PATH-SPECIFIC INSTRUCTIONS
+  # =============================================================================
+  # 
+  # This section will be automatically populated by the merge tool
+  # from individual technology-specific configuration files in configs/*/
+  # 
+  # Each technology (HTTP, Redis, Kafka, etc.) has its own path_instructions.yaml
+  # file that gets merged here during the build process.
   path_instructions:
     - path: "**/{http,client,api,network}*/**"
       instructions: |
@@ -1674,13 +1777,279 @@ reviews:
           - Timeout occurrences → `temporal_timeouts_total{type, operation}`
 
 
-  # Custom rules and thresholds
-  metrics:
-    # Performance-related rules
-    function_complexity:
-      threshold: 15
-      enabled: true
+  # =============================================================================
+  # GLOBAL REVIEW INSTRUCTIONS
+  # =============================================================================
+  # 
+  # These instructions apply to ALL code changes regardless of technology or path.
+  # They serve as a comprehensive checklist for code quality, security, and best practices.
+  # 
+  # Teams can customize these instructions to match their specific:
+  # - Coding standards and style guides
+  # - Security requirements
+  # - Testing policies
+  # - Documentation standards
+  # - Performance expectations
+  global_instructions: |
+    **🔍 General Code Review Checklist:**
+    
+    **📝 Code Quality:**
+    - ✅ Functions and methods have clear, descriptive names
+    - ✅ Complex logic is properly documented with comments
+    - ✅ No hardcoded values or magic numbers
+    - ✅ Error handling is comprehensive and appropriate
+    - ✅ Code follows consistent formatting and style
+    - ✅ No duplicate or redundant code
+    - ✅ Proper separation of concerns
+    
+    **🔒 Security:**
+    - ✅ No sensitive information (passwords, keys, tokens) in code
+    - ✅ Input validation and sanitization where appropriate
+    - ✅ Authentication and authorization checks are in place
+    - ✅ No SQL injection vulnerabilities
+    - ✅ No XSS vulnerabilities in web applications
+    - ✅ Secure communication protocols (HTTPS, TLS)
+    - ✅ Proper session management and timeout handling
+    
+    **🧪 Testing:**
+    - ✅ New functionality has corresponding tests
+    - ✅ Tests are meaningful and cover edge cases
+    - ✅ Test names clearly describe what they're testing
+    - ✅ No test code in production files
+    - ✅ Tests are fast and reliable
+    - ✅ Test coverage is adequate for critical paths
+    - ✅ Integration tests for complex workflows
+    
+    **📚 Documentation:**
+    - ✅ Public APIs are documented
+    - ✅ Complex business logic has inline comments
+    - ✅ README files are updated if needed
+    - ✅ Configuration changes are documented
+    - ✅ Architecture decisions are documented
+    - ✅ Setup and deployment instructions are current
+    
+    **🚀 Performance:**
+    - ✅ No obvious performance bottlenecks
+    - ✅ Database queries are optimized
+    - ✅ Resource cleanup is handled properly
+    - ✅ No memory leaks or resource leaks
+    - ✅ Efficient data structures are used
+    - ✅ Caching is implemented where appropriate
+    - ✅ Async operations are used for I/O-bound tasks
 
-    function_length:
-      threshold: 150
+  # =============================================================================
+  # CODE QUALITY METRICS & THRESHOLDS
+  # =============================================================================
+  # 
+  # These metrics help maintain code quality by flagging potential issues.
+  # Thresholds can be adjusted based on your team's standards and project requirements.
+  # 
+  # Each metric includes:
+  # - threshold: The value that triggers a review comment
+  # - enabled: Whether this metric is active
+  # - instructions: Explanation of why the threshold matters and how to address it
+  metrics:
+    # Function complexity measures the number of decision points in a function
+    # Higher complexity makes code harder to understand, test, and maintain
+    function_complexity:
+      threshold: 15        # Cyclomatic complexity > 15 triggers review
       enabled: true
+      instructions: |
+        Functions with cyclomatic complexity > 15 should be refactored into smaller,
+        more focused functions for better maintainability and testability.
+        
+        COMPLEXITY FACTORS:
+        - if/else statements
+        - switch cases
+        - loops (for, while, do-while)
+        - logical operators (&&, ||)
+        - catch blocks
+        
+        REFACTORING STRATEGIES:
+        - Extract complex conditions into well-named boolean functions
+        - Split large functions into smaller, focused functions
+        - Use early returns to reduce nesting
+        - Consider using strategy pattern for complex logic
+
+    # Function length measures the number of lines in a function
+    # Longer functions are harder to understand and maintain
+    function_length:
+      threshold: 150       # Functions > 150 lines trigger review
+      enabled: true
+      instructions: |
+        Functions longer than 150 lines should be broken down into smaller,
+        more focused functions for better readability and maintainability.
+        
+        REFACTORING STRATEGIES:
+        - Extract logical blocks into separate functions
+        - Use helper functions for repetitive code
+        - Consider breaking into multiple smaller functions
+        - Use classes/structs to group related functionality
+        
+        EXCEPTIONS:
+        - Data processing functions that must process large datasets
+        - Generated code (though this should be minimized)
+        - Legacy code that's being gradually refactored
+
+    # File length measures the total lines in a file
+    # Very long files can be hard to navigate and understand
+    file_length:
+      threshold: 500       # Files > 500 lines trigger review
+      enabled: true
+      instructions: |
+        Files longer than 500 lines should be considered for splitting into
+        multiple files or modules for better organization.
+        
+        SPLITTING STRATEGIES:
+        - Group related functionality into separate files
+        - Extract utility functions into shared modules
+        - Split large classes into multiple smaller classes
+        - Create separate files for different concerns
+        
+        ORGANIZATION TIPS:
+        - Keep related functionality together
+        - Use clear file naming conventions
+        - Consider using packages/modules for organization
+        - Maintain logical separation of concerns
+
+    # Nesting depth measures how deeply code is nested
+    # Deep nesting makes code hard to read and understand
+    nesting_depth:
+      threshold: 4         # Nesting > 4 levels triggers review
+      enabled: true
+      instructions: |
+        Code with nesting depth > 4 levels should be refactored to reduce
+        complexity and improve readability.
+        
+        NESTING REDUCTION TECHNIQUES:
+        - Use early returns to avoid deep nesting
+        - Extract complex conditions into boolean functions
+        - Use guard clauses at the beginning of functions
+        - Consider using switch statements instead of if-else chains
+        - Break complex logic into smaller functions
+        
+        EXAMPLE REFACTORING:
+        ```go
+        // Before (deep nesting)
+        if user != nil {
+            if user.IsActive() {
+                if user.HasPermission("read") {
+                    if data != nil {
+                        // process data
+                    }
+                }
+            }
+        }
+        
+        // After (early returns)
+        if user == nil || !user.IsActive() || !user.HasPermission("read") {
+            return errors.New("unauthorized")
+        }
+        if data == nil {
+            return errors.New("no data")
+        }
+        // process data
+        ```
+
+  # =============================================================================
+  # REVIEW BEHAVIOR CONFIGURATION
+  # =============================================================================
+  # 
+  # These settings control how CodeRabbit behaves during reviews.
+  # Adjust these based on your team's preferences and workflow requirements.
+  behavior:
+    # Review scope determines which files are included in reviews
+    review_all_files: true        # Review all changed files
+    review_test_files: true       # Include test files in reviews
+    review_documentation: true    # Review documentation changes
+    
+    # Comment behavior controls how CodeRabbit provides feedback
+    suggest_fixes: true           # Suggest specific fixes for issues
+    explain_why: true             # Explain why changes are suggested
+    
+    # Review depth controls the thoroughness of reviews
+    thoroughness: "high"          # Options: "low", "medium", "high"
+    focus_on_critical: true       # Prioritize critical issues
+    
+    # Language and framework awareness
+    language_agnostic: true       # Work with any programming language
+    framework_aware: true         # Understand framework-specific patterns
+
+  # =============================================================================
+  # SECURITY SCANNING CONFIGURATION
+  # =============================================================================
+  # 
+  # Security scanning helps identify potential security vulnerabilities
+  # and ensures code follows security best practices.
+  security:
+    enabled: true                 # Enable security scanning
+    scan_dependencies: true       # Check for vulnerable dependencies
+    scan_secrets: true            # Detect hardcoded secrets
+    scan_vulnerabilities: true    # Identify security vulnerabilities
+    
+    # Security rules define specific security checks
+    rules:
+      - name: "no_hardcoded_secrets"
+        enabled: true
+        severity: "high"          # Critical security issue
+        description: |
+          Detect hardcoded passwords, API keys, tokens, or other sensitive
+          information that should be stored in environment variables or
+          secure configuration management systems.
+        
+      - name: "input_validation"
+        enabled: true
+        severity: "medium"        # Important security consideration
+        description: |
+          Ensure all user inputs are properly validated and sanitized
+          to prevent injection attacks and data corruption.
+        
+      - name: "authentication_checks"
+        enabled: true
+        severity: "high"          # Critical security requirement
+        description: |
+          Verify that proper authentication mechanisms are in place
+          for all protected resources and operations.
+        
+      - name: "authorization_checks"
+        enabled: true
+        severity: "high"          # Critical security requirement
+        description: |
+          Ensure that authorization checks are performed to verify
+          users have permission to access specific resources.
+
+# =============================================================================
+# CONFIGURATION NOTES & CUSTOMIZATION GUIDE
+# =============================================================================
+#
+# This base configuration provides a solid foundation for most projects.
+# However, you may want to customize it based on your specific needs:
+#
+# 1. ADJUSTING THRESHOLDS:
+#    - Modify the values in the metrics section based on your team's standards
+#    - Consider your project's complexity and team experience level
+#    - Start with conservative thresholds and adjust based on feedback
+#
+# 2. ADDING CUSTOM LABELS:
+#    - Add new labels to the labeling_instructions section
+#    - Provide clear, specific criteria for when to apply each label
+#    - Include examples to help CodeRabbit make accurate suggestions
+#
+# 3. CUSTOMIZING GLOBAL INSTRUCTIONS:
+#    - Modify global_instructions to match your team's coding standards
+#    - Add project-specific requirements or guidelines
+#    - Include links to your style guides or documentation
+#
+# 4. SECURITY REQUIREMENTS:
+#    - Adjust security rules based on your application's security needs
+#    - Add industry-specific security requirements
+#    - Consider compliance requirements (SOC2, HIPAA, GDPR, etc.)
+#
+# 5. PERFORMANCE EXPECTATIONS:
+#    - Modify performance thresholds based on your application's requirements
+#    - Consider your infrastructure and user expectations
+#    - Add performance monitoring and alerting requirements
+#
+# For more information and examples, see the README.md file and the
+# technology-specific configuration files in the configs/ directory.
+
